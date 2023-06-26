@@ -13,6 +13,7 @@ class DetailPenilaian extends Model
 
     protected $fillable = [
         'id_pk',
+        'id_tipe_pk',
         'nama_penilaian',
         'ttl_nilai',
         'rata_nilai',

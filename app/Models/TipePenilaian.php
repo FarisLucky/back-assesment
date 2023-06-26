@@ -13,8 +13,8 @@ class TipePenilaian extends Model
 
     protected $fillable = [
         'id_pk',
-        'nama',
-        'tipe',
+        'nama_tipe',
+        'tipe_pk',
         'id_karyawan',
         'catatan',
     ];

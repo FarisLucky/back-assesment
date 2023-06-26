@@ -26,11 +26,15 @@ class DetailPenilaianKaryawanController extends Controller
             }
         });
 
-        $detailPenilaians->when(!is_null($sortBy) && !is_null($sortType), function ($query) use ($sortBy, $sortType) {
-            $query->orderBy($sortBy, $sortType);
-        }, function ($query) {
-            $query->orderBy('id', 'desc');
-        });
+        $detailPenilaians->when(
+            !is_null($sortBy) && !is_null($sortType),
+            function ($query) use ($sortBy, $sortType) {
+                $query->orderBy($sortBy, $sortType);
+            },
+            function ($query) {
+                $query->orderBy('id', 'desc');
+            }
+        );
 
         return DetailPenilaianResource::collection(
             $detailPenilaians->latest()->paginate($page)

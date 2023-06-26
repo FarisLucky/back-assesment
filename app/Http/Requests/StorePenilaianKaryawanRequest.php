@@ -27,7 +27,7 @@ class StorePenilaianKaryawanRequest extends FormRequest
     {
         return [
             'id_karyawan' => ['required', 'exists:m_karyawan,id'],
-            'sub_penilaian' => ['required'],
+            'penilaians' => ['required'],
             'tipe' => ['required', Rule::in(MPenilaian::TIPE)],
         ];
     }

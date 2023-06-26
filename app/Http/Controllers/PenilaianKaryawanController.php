@@ -14,6 +14,7 @@ use App\Models\MJabatan;
 use App\Models\MKaryawan;
 use App\Models\MTipe;
 use App\Models\SubPenilaianKaryawan;
+use App\Models\TipePenilaian;
 use App\Services\PenilaianKaryawanServices;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -89,25 +90,9 @@ class PenilaianKaryawanController extends Controller
             }
         ])
             ->select('id', 'nama', 'tipe')
+            ->whereHas('penilaian.subPenilaian')
             ->where('tipe', $tipe)
             ->get();
-
-        // $mPenilaian = MPenilaian::with([
-        //     'jabatan',
-        //     'subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai, $idJabatanKinerja) {
-
-        //         $query->select('id', 'id_penilaian', 'nama');
-        //         $query->when($tipe == MPenilaian::TIPE[1], function ($query) use ($idJabatanPenilai, $idJabatanKinerja) {
-
-        //             $query->where('id_jabatan_penilai', $idJabatanPenilai)
-        //                 ->where('id_jabatan_kinerja', $idJabatanKinerja);
-        //         });
-        //     }
-        // ])
-        //     ->select('id', 'nama', 'level')
-        //     ->has('subPenilaian')
-        //     ->where('tipe', $tipe)
-        //     ->get();
 
         return MTipeResource::collection($mPenilaian);
     }
@@ -121,6 +106,7 @@ class PenilaianKaryawanController extends Controller
 
     public function store(StorePenilaianKaryawanRequest $request)
     {
+        // return response()->json($request->penilaians[0]['relationship']['m_penilaian'], 500);
         $data = [];
         try {
 
@@ -162,53 +148,65 @@ class PenilaianKaryawanController extends Controller
 
             // throw new HttpException(500, $penilai->id);
 
-            foreach ($input['sub_penilaian'] as $detail) {
+            foreach ($input['penilaians'] as $tipePenilaian) {
 
-                $params['detail_ttl'] = 0; // init ttl detail penilaian
-                $jumlahIndikator = 0; // init jumlah indikator per detail penilaian
-                $subDetail = [];
-                $detailData = null;
-
-                foreach ($detail['relationship']['sub_penilaian'] as $subPenilaian) {
-
-                    array_push($subDetail, [
-                        'id_detail' => null, // set to null karena id_detail belum ada
-                        'penilaian' => $detail['nama'],
-                        'sub_penilaian' => $subPenilaian['nama'],
-                        'nilai' => $subPenilaian['nilai'],
-                        'updated_by' => $params['updated_by'],
-                        'created_at' => date('y-m-d'),
-                        'updated_at' => date('y-m-d'),
-                    ]);
-
-                    $params['detail_ttl'] += intval($subPenilaian['nilai']); // total nilai sub penilaian
-                    $jumlahIndikator++;
-                }
-
-                $params['jml_indikator'] += $jumlahIndikator; // tambahkan total jumlah semua sub indikator ke detail indikator
-
-                $detailData = [
+                $tipePenilaianData = [
                     'id_pk' => $storePenilaian->id,
-                    'nama_penilaian' => $detail['nama'],
-                    'ttl_nilai' => $params['detail_ttl'],
-                    'rata_nilai' => $params['detail_ttl'] / $jumlahIndikator,
-                    'id_penilai' => $penilai->id,
-                    'nama_penilai' => $penilai->nama,
-                    'jabatan_penilai' => $penilai->jabatan->nama,
-                    'catatan' => $detail['catatan'],
-                    'updated_by' => $params['updated_by']
+                    'nama_tipe' => $tipePenilaian['nama'],
+                    'tipe_pk' => $tipePenilaian['tipe'],
+                    'catatan' => optional($tipePenilaian)['catatan'],
                 ];
 
-                $params['penilaian_ttl'] += intval($params['detail_ttl']); // total nilai detail penilaian
+                $storeTipePenilaian = TipePenilaian::create($tipePenilaianData);
 
-                $storeDetail = DetailPenilaian::create($detailData); // insert detail penilaian
+                foreach ($tipePenilaian['relationship']['m_penilaian'] as $detail) {
 
-                $subDetail = array_map(function ($item) use ($storeDetail) { // update di_detail di sub detail penilaian
-                    $item['id_detail'] = $storeDetail->id;
-                    return $item;
-                }, $subDetail);
+                    $params['detail_ttl'] = 0; // init ttl detail penilaian
+                    $jumlahIndikator = 0; // init jumlah indikator per detail penilaian
+                    $subDetail = [];
+                    $detailData = null;
 
-                SubPenilaianKaryawan::insert($subDetail); // insert batch semua sub penilaian pada detail penilaian
+                    foreach ($detail['relationship']['sub_penilaian'] as $subPenilaian) {
+
+                        array_push($subDetail, [
+                            'id_detail' => null, // set to null karena id_detail belum ada
+                            'penilaian' => $detail['nama'],
+                            'sub_penilaian' => $subPenilaian['nama'],
+                            'nilai' => $subPenilaian['nilai'],
+                            'updated_by' => $params['updated_by'],
+                            'created_at' => date('y-m-d'),
+                            'updated_at' => date('y-m-d'),
+                        ]);
+
+                        $params['detail_ttl'] += intval($subPenilaian['nilai']); // total nilai sub penilaian
+                        $jumlahIndikator++;
+                    }
+
+                    $params['jml_indikator'] += $jumlahIndikator; // tambahkan total jumlah semua sub indikator ke detail indikator
+
+                    $detailData = [
+                        'id_pk' => $storePenilaian->id,
+                        'id_tipe_pk' => $storeTipePenilaian->id,
+                        'nama_penilaian' => $detail['nama'],
+                        'ttl_nilai' => $params['detail_ttl'],
+                        'rata_nilai' => $params['detail_ttl'] / $jumlahIndikator,
+                        'id_penilai' => $penilai->id,
+                        'nama_penilai' => $penilai->nama,
+                        'jabatan_penilai' => $penilai->jabatan->nama,
+                        'updated_by' => $params['updated_by']
+                    ];
+
+                    $params['penilaian_ttl'] += intval($params['detail_ttl']); // total nilai detail penilaian
+
+                    $storeDetail = DetailPenilaian::create($detailData); // insert detail penilaian
+
+                    $subDetail = array_map(function ($item) use ($storeDetail) { // update di_detail di sub detail penilaian
+                        $item['id_detail'] = $storeDetail->id;
+                        return $item;
+                    }, $subDetail);
+
+                    SubPenilaianKaryawan::insert($subDetail); // insert batch semua sub penilaian pada detail penilaian
+                }
             }
 
             $storePenilaian->ttl_nilai = $params['penilaian_ttl'];

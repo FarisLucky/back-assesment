@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\MKaryawan;
+use App\Models\MTipe;
 use App\Models\PenilaianKaryawan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -56,8 +57,6 @@ class HistoryPenilaianController extends Controller
                 'tipePenilaian', // tipe penilaian relationship
                 'tipePenilaian.detail', // tipe penilaian relationship
                 'tipePenilaian.detail.subPenilaian', // tipe penilaian relationship
-                // 'detail',
-                // 'detail.subPenilaian',
             ])
                 ->where(function ($query) use ($tipe, $month, $year) {
                     $query->where('tipe', $tipe)
@@ -69,7 +68,7 @@ class HistoryPenilaianController extends Controller
 
             return response()->json(
                 new PenilaianKaryawanResource($karyawan),
-                Response::HTTP_OK
+                Response::HTTP_INTERNAL_SERVER_ERROR
             );
         } catch (\Throwable $th) {
             return response()->json(

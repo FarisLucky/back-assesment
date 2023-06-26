@@ -31,8 +31,7 @@ class PenilaianKaryawanResource extends JsonResource
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
             'relationship' => [
-                'tipe_penilaian' => DetailPenilaianResource::collection($this->whenLoaded('detail')),
-                'detail' => DetailPenilaianResource::collection($this->whenLoaded('detail'))
+                'tipe_penilaian' => TipePenilaianResource::collection($this->whenLoaded('tipePenilaian')),
             ]
         ];
     }
