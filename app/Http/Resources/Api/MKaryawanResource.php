@@ -30,6 +30,7 @@ class MKaryawanResource extends JsonResource
                 'jabatans' => new JabatanResource($this->whenLoaded('jabatan')),
                 'pk_umum' => PenilaianKaryawanResource::collection($this->whenLoaded('penilaianKaryawanUmum')),
                 'pk_khusus' => PenilaianKaryawanResource::collection($this->whenLoaded('penilaianKaryawanKhusus')),
+                'penilaian_karyawan' => new PenilaianKaryawanResource($this->whenLoaded('penilaianKaryawan')),
             ]
         ];
     }
