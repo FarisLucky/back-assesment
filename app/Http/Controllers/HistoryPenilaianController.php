@@ -24,7 +24,8 @@ class HistoryPenilaianController extends Controller
                 $query->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'));
             }
-        ]);
+        ])
+			->where('id','<>', auth()->user()->id_karyawan);
 
         $karyawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {

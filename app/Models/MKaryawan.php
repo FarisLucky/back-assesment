@@ -72,4 +72,9 @@ class MKaryawan extends Model
     {
         return $this->hasMany(PenilaianKaryawan::class, 'id_karyawan')->where('tipe', MPenilaian::TIPE[0]);
     }
+	
+	public function penilaianKaryawan()
+    {
+        return $this->hasOne(PenilaianKaryawan::class, 'id_karyawan');
+    }
 }
