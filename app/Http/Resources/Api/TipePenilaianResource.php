@@ -20,10 +20,12 @@ class TipePenilaianResource extends JsonResource
             'id_detail' => $this->id_detail,
             'nama_tipe' => $this->nama_tipe,
             'tipe_pk' => $this->tipe_pk,
+            'id_karyawan' => $this->id_karyawan,
+            'nama_penilai' => $this->nama_penilai,
             'catatan' => $this->catatan,
             'updated_by' => $this->updated_by,
             'relationship' => [
-                'detail' => DetailPenilaianResource::collection($this->whenLoaded('detail'))
+                'detail' => DetailPenilaianResource::collection($this->whenLoaded('detailPenilaian'))
             ],
         ];
     }

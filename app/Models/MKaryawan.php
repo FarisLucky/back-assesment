@@ -63,6 +63,11 @@ class MKaryawan extends Model
         return $this->hasMany(PenilaianKaryawan::class, 'id_karyawan')->where('tipe', MPenilaian::TIPE[1]);
     }
 
+    public function penilaianKaryawan()
+    {
+        return $this->hasMany(PenilaianKaryawan::class, 'id_karyawan');
+    }
+
     public function penilaianKaryawanUmum()
     {
         return $this->hasMany(PenilaianKaryawan::class, 'id_karyawan')->where('tipe', MPenilaian::TIPE[0]);

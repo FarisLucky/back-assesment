@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\MKaryawan;
-use App\Models\MTipe;
 use App\Models\PenilaianKaryawan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,7 +20,7 @@ class HistoryPenilaianController extends Controller
         $sortType = request('sort_type');
 
         $karyawans = MKaryawan::with([
-            'penilaianKaryawans' => function ($query) {
+            'penilaianKaryawan' => function ($query) {
                 $query->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'));
             }
@@ -53,10 +52,11 @@ class HistoryPenilaianController extends Controller
     {
         try {
 
-            $karyawan = PenilaianKaryawan::with([
+            $penilaian = PenilaianKaryawan::with([
                 'tipePenilaian', // tipe penilaian relationship
-                'tipePenilaian.detail', // tipe penilaian relationship
-                'tipePenilaian.detail.subPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
+                'analisisSwot', // analisis swot relationship
             ])
                 ->where(function ($query) use ($tipe, $month, $year) {
                     $query->where('tipe', $tipe)
@@ -67,8 +67,8 @@ class HistoryPenilaianController extends Controller
                 ->firstOrFail();
 
             return response()->json(
-                new PenilaianKaryawanResource($karyawan),
-                Response::HTTP_INTERNAL_SERVER_ERROR
+                new PenilaianKaryawanResource($penilaian),
+                Response::HTTP_OK
             );
         } catch (\Throwable $th) {
             return response()->json(

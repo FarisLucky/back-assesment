@@ -48,4 +48,9 @@ class PenilaianKaryawan extends Model
     {
         return $this->hasMany(TipePenilaian::class, 'id_pk');
     }
+
+    public function analisisSwot()
+    {
+        return $this->hasOne(AnalisisSwot::class, 'id_pk');
+    }
 }

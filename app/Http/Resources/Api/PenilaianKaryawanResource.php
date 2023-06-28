@@ -30,8 +30,11 @@ class PenilaianKaryawanResource extends JsonResource
             'validasi_by' => $this->validasi_by,
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
+            'created_at' => optional($this->created_at)->isoFormat('L'),
+            'updated_at' => optional($this->updated_at)->isoFormat('L'),
             'relationship' => [
                 'tipe_penilaian' => TipePenilaianResource::collection($this->whenLoaded('tipePenilaian')),
+                'analisis_swot' => new AnalisisSwotResource($this->whenLoaded('analisisSwot')),
             ]
         ];
     }

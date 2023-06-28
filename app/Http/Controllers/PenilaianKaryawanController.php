@@ -9,6 +9,7 @@ use App\Http\Requests\UpdatePenilaianKaryawanRequest;
 use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\MTipeResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
+use App\Models\AnalisisSwot;
 use App\Models\DetailPenilaian;
 use App\Models\MJabatan;
 use App\Models\MKaryawan;
@@ -155,6 +156,8 @@ class PenilaianKaryawanController extends Controller
                     'nama_tipe' => $tipePenilaian['nama'],
                     'tipe_pk' => $tipePenilaian['tipe'],
                     'catatan' => optional($tipePenilaian)['catatan'],
+                    'id_karyawan' => auth()->user()->karyawan->id,
+                    'nama_penilai' => auth()->user()->karyawan->nama,
                 ];
 
                 $storeTipePenilaian = TipePenilaian::create($tipePenilaianData);
@@ -212,6 +215,15 @@ class PenilaianKaryawanController extends Controller
             $storePenilaian->ttl_nilai = $params['penilaian_ttl'];
             $storePenilaian->rata_nilai = $params['penilaian_ttl'] / $params['jml_indikator']; // rata rata nilai => ttl_nilai dibagi banyak indikator
             $storePenilaian->save();
+
+            // Analisis Swot
+            AnalisisSwot::create([
+                'id_pk' => $storePenilaian->id,
+                'kelebihan' => $request->analisis_swot['kelebihan'],
+                'kekurangan' => $request->analisis_swot['kekurangan'],
+                'kesempatan' => $request->analisis_swot['kesempatan'],
+                'ancaman' => $request->analisis_swot['ancaman'],
+            ]);
 
             DB::commit();
 

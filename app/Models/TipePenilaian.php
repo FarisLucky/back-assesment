@@ -16,6 +16,8 @@ class TipePenilaian extends Model
         'nama_tipe',
         'tipe_pk',
         'id_karyawan',
+        'nama_penilai',
+        'jabatan_penilai',
         'catatan',
     ];
 
