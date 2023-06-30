@@ -18,8 +18,7 @@ class MPenilaian extends Model
     protected $fillable = [
         'nama',
         'tipe',
-        'id_jabatan_penilai',
-        'level',
+        'id_tipe',
     ];
 
     public $casts = [
@@ -27,21 +26,31 @@ class MPenilaian extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function subPenilaian()
-    {
-        return $this->hasMany(MSubPenilaian::class, 'id_penilaian');
-    }
-
-    public function jabatan()
-    {
-        return $this->belongsTo(MJabatan::class, 'level', 'level');
-    }
-
     public static function boot()
     {
         parent::boot();
         static::deleting(function ($penilaian) {
             $penilaian->subPenilaian()->delete();
         });
+    }
+
+    /**
+     * Get the tipe that owns the MPenilaian
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function mTipe()
+    {
+        return $this->belongsTo(MTipe::class, 'id_tipe');
+    }
+
+    /**
+     * Get all of the subPenilaian for the MPenilaian
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function subPenilaian()
+    {
+        return $this->hasMany(MSubPenilaian::class, 'id_penilaian');
     }
 }

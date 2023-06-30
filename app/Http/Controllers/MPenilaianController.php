@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMPenilaianRequest;
 use App\Http\Resources\Api\MPenilaianResource;
 use App\Models\MJabatan;
 use App\Models\MPenilaian;
+use App\Models\MTipe;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +22,7 @@ class MPenilaianController extends Controller
         $sortBy = request('sort_by');
         $sortType = request('sort_type');
 
-        $penilaians = MPenilaian::with('jabatan');
+        $penilaians = MPenilaian::with('mTipe');
 
         $penilaians->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
@@ -35,7 +36,7 @@ class MPenilaianController extends Controller
             $query->orderBy('id', 'desc');
         });
 
-        return MPenilaianResource::collection($penilaians->latest()->paginate($page));
+        return MPenilaianResource::collection($penilaians->paginate($page));
     }
 
     public function data()
@@ -53,13 +54,12 @@ class MPenilaianController extends Controller
     public function store(StoreMPenilaianRequest $request)
     {
         $data = $request->validated();
-
-        if ($data['tipe'] == MPenilaian::TIPE[0]) { // tipe umum
-            $data['level'] = $request->level;
-        }
-
         try {
             DB::beginTransaction();
+
+            $data = array_merge($data, [
+                'tipe' => optional(MTipe::find($request->id_tipe, ['tipe']))->tipe,
+            ]);
 
             MPenilaian::create($data);
 

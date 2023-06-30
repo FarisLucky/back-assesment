@@ -36,10 +36,6 @@ class CreateMastersTable extends Migration
             $table->string('tipe', 20)
                 ->default('pk_umum')
                 ->nullable();
-            $table->string('level', 3)
-                ->nullable();
-            $table->unsignedSmallInteger('id_jabatan_penilai')
-                ->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

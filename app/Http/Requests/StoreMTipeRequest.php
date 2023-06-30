@@ -24,7 +24,8 @@ class StoreMTipeRequest extends FormRequest
     public function rules()
     {
         return [
-            'nama' => ['required']
+            'nama' => ['required'],
+            'tipe' => ['required']
         ];
     }
 }

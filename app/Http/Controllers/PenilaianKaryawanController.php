@@ -17,6 +17,7 @@ use App\Models\MTipe;
 use App\Models\SubPenilaianKaryawan;
 use App\Models\TipePenilaian;
 use App\Services\PenilaianKaryawanServices;
+use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -70,6 +71,7 @@ class PenilaianKaryawanController extends Controller
 
     public function getNilai($idKaryawan, $tipe)
     {
+
         $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
 
         $karyawan = MKaryawan::where('id', $idKaryawan)->firstOrFail();
@@ -107,9 +109,18 @@ class PenilaianKaryawanController extends Controller
 
     public function store(StorePenilaianKaryawanRequest $request)
     {
-        // return response()->json($request->penilaians[0]['relationship']['m_penilaian'], 500);
         $data = [];
+
         try {
+
+            $getPenilaian = PenilaianKaryawan::where([
+                'id_karyawan' => $request->id_karyawan,
+                'tipe' => $request->tipe,
+            ])->whereMonth('created_at', date('Y-m-d'))->first();
+
+            if (!is_null($getPenilaian)) {
+                throw new Exception('Penilaian Sudah Ada');
+            }
 
             DB::beginTransaction(); // transaction start
 

@@ -13,35 +13,41 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required',
-            'password' => 'required',
-            'device_name' => 'required'
-        ]);
 
-        $user = User::with([
-            'karyawan' => function ($query) {
-                $query->select('id', 'nama', 'id_unit', 'id_jabatan');
-            },
-            'karyawan.jabatan' => function ($query) {
-                $query->select('id', 'nama', 'level');
-            }
-        ])
-            ->select('id', 'name', 'email', 'password')
-            ->where('email', $request->email)
-            ->first();
+        try {
 
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['akun tidak ditemukan']
+            $request->validate([
+                'email' => 'required',
+                'password' => 'required',
+                'device_name' => 'required'
             ]);
-        }
 
-        return [
-            'user' => $user,
-            'token' => $user->createToken($request->device_name)->plainTextToken
-        ];
+            $user = User::with([
+                'karyawan' => function ($query) {
+                    $query->select('id', 'nama', 'id_unit', 'id_jabatan');
+                },
+                'karyawan.jabatan' => function ($query) {
+                    $query->select('id', 'nama', 'level');
+                }
+            ])
+                ->select('id','id_karyawan', 'name', 'email', 'password')
+                ->where('email', $request->email)
+                ->firstOrFail();
+
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => ['akun tidak ditemukan']
+                ]);
+            }
+
+            return response()->json([
+                'user' => $user,
+                'token' => $user->createToken($request->device_name)->plainTextToken
+            ]);
+        } catch (\Throwable $th) {
+
+            return response()->json($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function logout()

@@ -91,7 +91,7 @@ class MSubPenilaianController extends Controller
 
         foreach ($data['nama'] as $nama) {
             array_push($formData, [
-                'nama' => $nama['nama'],
+                'nama' => strtoupper($nama['nama']),
                 'id_penilaian' => $data['id_penilaian'],
                 'id_jabatan_penilai' => !is_null(optional($data)['id_jabatan_penilai']) ? $data['id_jabatan_penilai'] : null,
                 'id_jabatan_kinerja' => !is_null(optional($data)['id_jabatan_kinerja']) ? $data['id_jabatan_kinerja'] : null,
@@ -130,7 +130,12 @@ class MSubPenilaianController extends Controller
     public function update(UpdateMSubPenilaianRequest $request, $id)
     {
         $mSubPenilaian = MSubPenilaian::findOrFail($id);
-        $mSubPenilaian->update($request->validated());
+
+        $data = $request->validated();
+
+        $data = array_merge($data, ['nama' => $request->nama[0]['nama']]);
+
+        $mSubPenilaian->update($data);
 
         return response()->json(
             'Berhasil diubah !',

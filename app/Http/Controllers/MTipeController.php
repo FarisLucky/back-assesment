@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMTipeRequest;
 use App\Http\Requests\UpdateMTipeRequest;
-use App\Http\Resources\Api\MTipePenilaianResource;
-use App\Http\Resources\MTipeResource;
+use App\Http\Resources\Api\MTipeResource;
 use App\Models\MPenilaian;
 use App\Models\MTipe;
 use App\Models\MTipePenilaian;
@@ -85,12 +84,7 @@ class MTipeController extends Controller
                 return $penilaian;
             });
 
-            // $tipe = $tipe->map(function($penilaian){
-
-            // });
-
             return response()->json($penilaianByTipe);
-            // return response()->json(MTipePenilaianResource::collection($tipe));
         } catch (\Throwable $th) {
 
             return response()->json($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -105,22 +99,15 @@ class MTipeController extends Controller
      */
     public function store(StoreMTipeRequest $request)
     {
-        $data = $request->validated();
+        try {
+            $data = $request->validated();
 
-        if ($request->has('tipe')) {
-            $data = array_merge($data, [
-                'tipe' => $request->tipe
-            ]);
+            MTipe::create($data);
+
+            return response()->json('Tindakan Berhasil', Response::HTTP_CREATED);
+        } catch (\Throwable $th) {
+            return response()->json($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return response()->json($data);
-
-        // MTipe::create($data);
-
-        return response()->json(
-            'Tindakan Berhasil',
-            Response::HTTP_CREATED
-        );
     }
 
     /**

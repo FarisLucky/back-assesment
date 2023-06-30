@@ -27,7 +27,7 @@ class StoreMPenilaianRequest extends FormRequest
     {
         return [
             'nama' => ['required'],
-            'tipe' => ['required', Rule::in(MPenilaian::TIPE)],
+            'id_tipe' => ['required', 'exists:m_tipe,id'],
         ];
     }
 }

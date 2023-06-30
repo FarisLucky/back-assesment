@@ -18,9 +18,9 @@ class MPenilaianResource extends JsonResource
             'id' => $this->id,
             'nama' => $this->nama,
             'tipe' => $this->tipe,
-            'level' => $this->level,
+            'id_tipe' => $this->id_tipe,
             'relationship' => [
-                'jabatan' => new JabatanResource($this->whenLoaded('jabatan')),
+                'tipe_penilaian' => new MTipeResource($this->whenLoaded('mTipe')),
                 'sub_penilaian' => MSubPenilaianResource::collection($this->whenLoaded('subPenilaian'))
             ]
         ];

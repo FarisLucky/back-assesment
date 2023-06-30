@@ -99,16 +99,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('history-penilaian', HistoryPenilaianController::class)
         ->except('show')
         ->names('history-penilaian');
+
+    Route::get('history-penilaian/{id}/{tipe}/{month}/{year}', [HistoryPenilaianController::class, 'show'])
+        ->name('history-penilaian.show');
+
+    Route::get('tipes/by/{tipe}', [MTipeController::class, 'tampilByTipe'])
+        ->name('mTipes.data');
+
+    Route::get('tipes/all/data', [MTipeController::class, 'data'])
+        ->name('mTipes.data');
 });
-
-Route::get('history-penilaian/{id}/{tipe}/{month}/{year}', [HistoryPenilaianController::class, 'show'])
-    ->name('history-penilaian.show');
-
-Route::get('tipes/by/{tipe}', [MTipeController::class, 'tampilByTipe'])
-    ->name('mTipes.data');
-
-Route::get('tipes/all/data', [MTipeController::class, 'data'])
-    ->name('mTipes.data');
 /**
  * Authentication route
  *

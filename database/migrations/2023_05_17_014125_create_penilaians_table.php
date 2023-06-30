@@ -28,9 +28,9 @@ class CreatePenilaiansTable extends Migration
                 ->default('pk_umum')
                 ->nullable();
             $table->string('status')->nullable(); // draft, tersimpan, validasi
-            $table->unsignedBigInteger('validasi_by');
-            $table->unsignedBigInteger('created_by');
-            $table->unsignedBigInteger('updated_by');
+            $table->unsignedBigInteger('validasi_by')->nullable();
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
