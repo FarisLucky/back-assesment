@@ -135,6 +135,14 @@ class MSubPenilaianController extends Controller
 
         $data = array_merge($data, ['nama' => $request->nama[0]['nama']]);
 
+        if ($request->has('id_jabatan_penilai')) {
+            $data = array_merge($data, ['id_jabatan_penilai' => $request->id_jabatan_penilai]);
+        }
+
+        if ($request->has('id_jabatan_kinerja')) {
+            $data = array_merge($data, ['id_jabatan_kinerja' => $request->id_jabatan_kinerja]);
+        }
+
         $mSubPenilaian->update($data);
 
         return response()->json(

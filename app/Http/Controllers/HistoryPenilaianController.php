@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
+use App\Models\MJabatan;
 use App\Models\MKaryawan;
 use App\Models\PenilaianKaryawan;
 use Illuminate\Http\Request;
@@ -19,13 +20,21 @@ class HistoryPenilaianController extends Controller
         $sortBy = request('sort_by');
         $sortType = request('sort_type');
 
+        $jabatan = MJabatan::select('id')
+            ->where('id_parent', auth()->user()->karyawan->id_jabatan)
+            ->get();
+
         $karyawans = MKaryawan::with([
             'penilaianKaryawan' => function ($query) {
                 $query->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'));
             }
         ])
-			->where('id','<>', auth()->user()->id_karyawan);
+            ->where('id', '<>', auth()->user()->id_karyawan);
+
+        $karyawans->when(!is_null($jabatan), function ($query) use ($jabatan) {
+            $query->whereIn('id_jabatan', $jabatan->pluck('id'));
+        });
 
         $karyawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {

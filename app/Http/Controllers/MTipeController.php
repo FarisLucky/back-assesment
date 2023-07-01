@@ -135,8 +135,6 @@ class MTipeController extends Controller
      */
     public function update(UpdateMTipeRequest $request, $id)
     {
-        return response()->json($request->validated());
-
         $mTipe = MTipe::findOrFail($id);
         $mTipe->update($request->validated());
 
@@ -152,8 +150,9 @@ class MTipeController extends Controller
      * @param  \App\Models\MTipe  $mTipe
      * @return \Illuminate\Http\Response
      */
-    public function destroy(MTipe $mTipe)
+    public function destroy($id)
     {
+        $mTipe = MTipe::findOrFail($id);
         $mTipe->delete();
 
         return response()->json('', Response::HTTP_NO_CONTENT);

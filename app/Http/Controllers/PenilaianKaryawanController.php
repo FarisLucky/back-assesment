@@ -80,8 +80,6 @@ class PenilaianKaryawanController extends Controller
 
         $mPenilaian = MTipe::with([
             'penilaian',
-            'penilaian.jabatan',
-            'penilaian.jabatan',
             'penilaian.subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai, $idJabatanKinerja) {
 
                 $query->select('id', 'id_penilaian', 'nama');
@@ -128,8 +126,10 @@ class PenilaianKaryawanController extends Controller
 
             $penilaianServices = new PenilaianKaryawanServices();
 
+            $userPenilai = auth()->user();
+
             $karyawan = $penilaianServices->getKaryawan($input['id_karyawan']);
-            $penilai = $penilaianServices->getKaryawan(3);
+            $penilai = $penilaianServices->getKaryawan($userPenilai->id_karyawan);
 
             $params = [
                 'penilaian_ttl' => 0,

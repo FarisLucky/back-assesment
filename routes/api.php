@@ -47,10 +47,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('units', UnitController::class)
         ->names('mUnits');
 
-    // Route::get('tipes/all/data', [MTipeController::class, 'data'])
-    //     ->name('mTipes.data');
-    // Route::get('tipes/by/{tipe}', [MTipeController::class, 'tampilByTipe'])
-    //     ->name('mTipes.data');
+    Route::get('tipes/all/data', [MTipeController::class, 'data'])
+        ->name('mTipes.data');
+    Route::get('tipes/by/{tipe}', [MTipeController::class, 'tampilByTipe'])
+        ->name('mTipes.data');
     Route::apiResource('tipes', MTipeController::class)
         ->names('mTipes');
 
