@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HistoryPenilaianController;
 use App\Models\MJabatan;
 use App\Models\PersonalAccessToken;
 use Illuminate\Http\Request;
@@ -20,6 +21,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/pdf-view/{idPenilaian}', [HistoryPenilaianController::class, 'printUmum'])
+    ->name('print.nilai');
+Route::get('/excel-view/{idPenilaian}', [HistoryPenilaianController::class, 'excelUmum'])
+    ->name('excel.nilai');
 
 Route::get('/tokens/create', function (Request $request) {
     $user = PersonalAccessToken::find(1);

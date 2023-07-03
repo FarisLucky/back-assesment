@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PenilaianExport;
 use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\MJabatan;
@@ -9,6 +10,7 @@ use App\Models\MKaryawan;
 use App\Models\PenilaianKaryawan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class HistoryPenilaianController extends Controller
 {
@@ -96,5 +98,49 @@ class HistoryPenilaianController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function printUmum($idPenilaian)
+    {
+        try {
+            $nilai = PenilaianKaryawan::with([
+                'tipePenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
+                'analisisSwot', // analisis swot relationship
+            ])
+                ->where('id', $idPenilaian)
+                ->where('tipe', 'pk_umum')
+                ->firstOrFail();
+
+            return view('history.nilai_umum', compact('nilai'));
+        } catch (\Throwable $th) {
+
+            return dd($th->getMessage());
+
+            // abort(404, 'MAAF TIDAK ADA DATA');
+        }
+    }
+
+    public function excelUmum($idPenilaian)
+    {
+        try {
+            $nilai = PenilaianKaryawan::with([
+                'tipePenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
+                'analisisSwot', // analisis swot relationship
+            ])
+                ->where('id', $idPenilaian)
+                ->where('tipe', 'pk_umum')
+                ->firstOrFail();
+
+            return Excel::download(new PenilaianExport($nilai), 'excelUmum-' . $nilai->nama_karyawan . '.xlsx');
+        } catch (\Throwable $th) {
+
+            return dd($th->getMessage());
+
+            // abort(404, 'MAAF TIDAK ADA DATA');
+        }
     }
 }
