@@ -18,6 +18,8 @@ class MTipeResource extends JsonResource
             'id' => $this->id,
             'nama' => $this->nama,
             'tipe' => $this->tipe,
+            'check' => $this->check,
+            'subCount' => $this->subCount,
             'relationship' => [
                 'm_penilaian' => MPenilaianResource::collection($this->whenLoaded('penilaian')),
             ]

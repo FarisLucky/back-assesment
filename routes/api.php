@@ -74,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('penilaian-karyawan.data');
     Route::get('penilaian-karyawans/get-nilai/{idKaryawan}/{tipe}', [PenilaianKaryawanController::class, 'getNilai'])
         ->name('penilaian-karyawan.data');
+    Route::get('penilaian-karyawan-progress', [PenilaianKaryawanController::class, 'indexProgress'])->name('penilaian-karyawan.progress');
     Route::apiResource('penilaian-karyawans', PenilaianKaryawanController::class)
         ->names('penilaian-karyawan');
 
@@ -114,3 +115,6 @@ Route::middleware('auth:sanctum')->group(function () {
  *
  **/
 Route::post('login', [LoginController::class, 'login'])->name('auth.login');
+
+Route::get('penilaian-karyawans/get-nilai/{idKaryawan}/{tipe}', [PenilaianKaryawanController::class, 'getNilai'])
+    ->name('penilaian-karyawan.data');

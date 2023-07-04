@@ -7,6 +7,7 @@ use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\MJabatan;
 use App\Models\MKaryawan;
+use App\Models\MTipePenilaian;
 use App\Models\PenilaianKaryawan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

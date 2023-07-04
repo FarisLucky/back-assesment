@@ -19,6 +19,8 @@ class MPenilaianResource extends JsonResource
             'nama' => $this->nama,
             'tipe' => $this->tipe,
             'id_tipe' => $this->id_tipe,
+            'id_tipe' => $this->id_tipe,
+            'sub_count' => $this->sub_count,
             'relationship' => [
                 'tipe_penilaian' => new MTipeResource($this->whenLoaded('mTipe')),
                 'sub_penilaian' => MSubPenilaianResource::collection($this->whenLoaded('subPenilaian'))

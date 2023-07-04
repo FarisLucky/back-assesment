@@ -44,6 +44,11 @@ class PenilaianKaryawan extends Model
         return $this->hasMany(DetailPenilaian::class, 'id_pk');
     }
 
+    public function karyawan()
+    {
+        return $this->belongsTo(MKaryawan::class, 'id_karyawan');
+    }
+
     public function tipePenilaian()
     {
         return $this->hasMany(TipePenilaian::class, 'id_pk');
