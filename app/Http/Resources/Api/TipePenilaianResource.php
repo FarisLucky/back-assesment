@@ -24,6 +24,7 @@ class TipePenilaianResource extends JsonResource
             'nama_penilai' => $this->nama_penilai,
             'catatan' => $this->catatan,
             'updated_by' => $this->updated_by,
+            'check_penilai' => $this->check_penilai,
             'relationship' => [
                 'detail' => DetailPenilaianResource::collection($this->whenLoaded('detailPenilaian'))
             ],

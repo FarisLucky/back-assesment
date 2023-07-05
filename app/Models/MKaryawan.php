@@ -48,6 +48,12 @@ class MKaryawan extends Model
         "updated_at" => "datetime",
     ];
 
+    public function scopeWithWhereHas($query, $relation, $constraint)
+    {
+        return $query->whereHas($relation, $constraint)
+            ->with([$relation => $constraint]);
+    }
+
     public function jabatan()
     {
         return $this->belongsTo(MJabatan::class, 'id_jabatan');

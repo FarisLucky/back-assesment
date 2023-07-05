@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Models\MKaryawan;
-use App\Models\MPenilaian;
 use App\Models\MSubPenilaian;
-use App\Models\PenilaianKaryawan;
 
 class PenilaianKaryawanServices
 {

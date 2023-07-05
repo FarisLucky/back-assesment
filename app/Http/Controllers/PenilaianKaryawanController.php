@@ -7,6 +7,7 @@ use App\Models\MPenilaian;
 use App\Http\Requests\StorePenilaianKaryawanRequest;
 use App\Http\Requests\UpdatePenilaianKaryawanRequest;
 use App\Http\Resources\Api\MKaryawanResource;
+use App\Http\Resources\Api\MPenilaianResource;
 use App\Http\Resources\Api\MTipeResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\AnalisisSwot;
@@ -17,6 +18,7 @@ use App\Models\MTipe;
 use App\Models\MTipePenilaian;
 use App\Models\SubPenilaianKaryawan;
 use App\Models\TipePenilaian;
+use App\Models\User;
 use App\Services\PenilaianKaryawanServices;
 use Exception;
 use Illuminate\Http\Response;
@@ -53,7 +55,10 @@ class PenilaianKaryawanController extends Controller
                     ->whereYear('tgl_nilai', $year);
             },
         ])
-            ->whereIn('id_jabatan', $childJabatan->pluck('id'));
+            ->where(function ($query) use ($childJabatan, $karyawan) {
+                $query->whereIn('id_jabatan', $childJabatan->pluck('id'))
+                    ->orWhere('id_unit', $karyawan->karyawan->id_unit);
+            });
 
         $penilaianKaryawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
@@ -77,25 +82,24 @@ class PenilaianKaryawanController extends Controller
         $columnValFilter = request('column_val');
         $sortBy = request('sort_by');
         $sortType = request('sort_type');
+        $month = date('m');
+        $year = date('Y');
 
-        $jabatan = MJabatan::select('id')
-            ->where('id_parent', auth()->user()->karyawan->id_jabatan)
+        $karyawan = User::with('karyawan')->find(1);
+
+        $childJabatan = MJabatan::select('id')
+            ->where('id_parent', $karyawan->karyawan->id_jabatan)
             ->get();
 
-        $karyawans = PenilaianKaryawan::with([
-            'karyawan' => function ($query) {
-                $query->where(function ($query) {
-                    $query->whereMonth('created_at', date('m'))
-                        ->whereYear('created_at', date('Y'));
-                })
-                    ->whereNotNull('validasi_by');
+        $karyawans = MKaryawan::withWhereHas(
+            'penilaianKaryawan',
+            function ($query) use ($month, $year) {
+                $query->select('id', 'id_karyawan', 'tipe', 'tgl_nilai', 'status')
+                    ->whereMonth('tgl_nilai', $month)
+                    ->whereYear('tgl_nilai', $year);
             }
-        ])
-            ->where('id', '<>', auth()->user()->id_karyawan);
-
-        $karyawans->when(!is_null($jabatan), function ($query) use ($jabatan) {
-            $query->whereIn('id_jabatan', $jabatan->pluck('id'));
-        });
+        )
+            ->whereIn('id_jabatan', $childJabatan->pluck('id'));
 
         $karyawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
@@ -117,11 +121,9 @@ class PenilaianKaryawanController extends Controller
     public function getNilai($idKaryawan, $tipe)
     {
 
-        // $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
-        $idJabatanPenilai = 168;
-
         $karyawan = MKaryawan::where('id', $idKaryawan)->firstOrFail();
 
+        $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
         $idJabatanKinerja = $karyawan->id_jabatan;
 
         $mPenilaian = MTipe::with([
@@ -326,19 +328,125 @@ class PenilaianKaryawanController extends Controller
         return response()->json($data, $data['data']['status']);
     }
 
-    public function show($id)
+    public function showProgress($id)
     {
-        $penilaianKaryawans = PenilaianKaryawan::findOrFail($id);
+        try {
 
-        return new PenilaianKaryawanResource($penilaianKaryawans);
+            $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
+
+            $penilaian = PenilaianKaryawan::with([
+                'tipePenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
+                'analisisSwot', // analisis swot relationship
+            ])
+                ->where('id', $id)
+                ->firstOrFail();
+
+            $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
+
+            $penilaian->tipePenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian) {
+                $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
+                    ->where('id_tipe', $tipe->id_tipe)
+                    ->count();
+
+                return $tipe;
+            });
+
+            return response()->json(
+                new PenilaianKaryawanResource($penilaian),
+                Response::HTTP_OK
+            );
+        } catch (\Throwable $th) {
+            return response()->json(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     public function update(UpdatePenilaianKaryawanRequest $request, $id)
     {
-        $penilaianKaryawans = PenilaianKaryawan::findOrFail($id);
-        $penilaianKaryawans->update($request->validated());
 
-        return new PenilaianKaryawanResource($penilaianKaryawans);
+        $data = [];
+
+        try {
+
+            DB::beginTransaction(); // transaction start
+
+            $input = $request->validated();
+
+            $getPenilaian = PenilaianKaryawan::find($id);
+
+            if (is_null($getPenilaian)) {
+                throw new Exception('Penilaian Belum Ada');
+            }
+
+            $ttlNilai = 0;
+            $avgNilai = 0;
+
+            foreach ($input['penilaian']['relationship']['tipe_penilaian'] as $tipe) {
+
+                if ($tipe['check_penilai'] > 1) {
+
+                    foreach ($tipe['relationship']['detail'] as $detail) {
+                        $avgDetail = 0;
+                        $sumDetail = 0;
+
+                        foreach ($detail['relationship']['sub'] as $sub) {
+                            $sumDetail += $sub['nilai'];
+                            $sub = SubPenilaianKaryawan::find($sub['id']);
+                            $sub->update([
+                                'nilai' => $sub['nilai']
+                            ]);
+                        }
+
+                        $detail = DetailPenilaian::find($detail['id']);
+                        $detail->update([
+                            'ttl_nilai' => $sumDetail,
+                            'rata_nilai' => $avgDetail,
+                        ]);
+                    }
+
+                    $userPenilai = auth()->user();
+
+                    $tipePenilaianData = [
+                        'catatan' => optional($tipe)['catatan'],
+                        'id_karyawan' => $userPenilai->karyawan->id,
+                        'nama_penilai' => $userPenilai->karyawan->nama,
+                    ];
+
+                    $tipePenilaian = TipePenilaian::find($tipe);
+                    $tipePenilaian->update($tipePenilaianData);
+                }
+            }
+
+            $getPenilaian->ttl_nilai = $ttlNilai;
+            $getPenilaian->rata_nilai = $avgNilai;
+            $getPenilaian->save();
+
+            // Analisis Swot;
+            // $swot = AnalisisSwot::find($getPenilaian->id);
+            // $swot->kelebihan = $request->analisis_swot['kelebihan'];
+            // $swot->kekurangan = $request->analisis_swot['kekurangan'];
+            // $swot->kesempatan = $request->analisis_swot['kesempatan'];
+            // $swot->ancaman = $request->analisis_swot['ancaman'];
+            // $swot->save();
+            // throw new Exception('test');
+
+            DB::commit();
+
+            $data['data']['message'] = 'Tindakan Berhasil !';
+            $data['data']['status'] = Response::HTTP_OK;
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+
+            $data['data']['message'] = $th->getMessage();
+            $data['data']['status'] = Response::HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        return response()->json($data, $data['data']['status']);
     }
 
     public function destroy($id)

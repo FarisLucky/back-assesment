@@ -13,7 +13,7 @@ class UpdatePenilaianKaryawanRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,20 +24,8 @@ class UpdatePenilaianKaryawanRequest extends FormRequest
     public function rules()
     {
         return [
-            'id_karyawan' => ['required', 'exists:m_karyawan,id'],
-            'nama_karyawan' => ['required'],
-            'jabatan' => ['required'],
-            'id_penilai' => ['required', 'exists:m_karyawan,id'],
-            'nama_penilai' => ['required'],
-            'jabatan_penilai' => ['required'],
-            'tgl_nilai' => ['required'],
-            'ttl_nilai' => ['required'],
-            'rata_nilai' => ['required'],
-            'tipe' => ['required'],
-            'status' => ['required'],
-            'validasi_by' => ['required'],
-            'created_by' => ['required'],
-            'updated_by' => ['required'],
+            'id_penilaian' => ['required'],
+            'penilaian' => ['required'],
         ];
     }
 }
