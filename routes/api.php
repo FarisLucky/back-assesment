@@ -70,7 +70,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('sub-penilaians', MSubPenilaianController::class)
         ->names('mSub-penilaians');
 
-
     Route::get('penilaian-karyawans/get-nilai/{idKaryawan}/{tipe}', [PenilaianKaryawanController::class, 'getNilai'])
         ->name('penilaian-karyawan.data');
     Route::get('penilaian-karyawans/all/data', [PenilaianKaryawanController::class, 'data'])
@@ -122,3 +121,6 @@ Route::middleware('auth:sanctum')->group(function () {
  *
  **/
 Route::post('login', [LoginController::class, 'login'])->name('auth.login');
+
+// Route::get('penilaian-karyawans/{id_penilaian}/progress', [PenilaianKaryawanController::class, 'showProgress'])
+    // ->name('penilaian-karyawan.showProgress');

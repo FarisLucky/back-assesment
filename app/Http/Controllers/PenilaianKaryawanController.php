@@ -7,7 +7,6 @@ use App\Models\MPenilaian;
 use App\Http\Requests\StorePenilaianKaryawanRequest;
 use App\Http\Requests\UpdatePenilaianKaryawanRequest;
 use App\Http\Resources\Api\MKaryawanResource;
-use App\Http\Resources\Api\MPenilaianResource;
 use App\Http\Resources\Api\MTipeResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\AnalisisSwot;
@@ -55,10 +54,16 @@ class PenilaianKaryawanController extends Controller
                     ->whereYear('tgl_nilai', $year);
             },
         ])
-            ->where(function ($query) use ($childJabatan, $karyawan) {
-                $query->whereIn('id_jabatan', $childJabatan->pluck('id'))
-                    ->orWhere('id_unit', $karyawan->karyawan->id_unit);
-            });
+            ->where('id', '<>', $karyawan->id_karyawan);
+
+        // $penilaianKaryawans->when($childJabatan->isNotEmpty(), function ($query) use ($childJabatan) {
+        //     $query->whereIn('id_jabatan', $childJabatan->pluck('id'));
+        // });
+
+        // $penilaianKaryawans->when($childJabatan->isEmpty(), function ($query) use ($karyawan) {
+        //     $query->where('id_unit', $karyawan->karyawan->id_unit)
+        //         ->where('id_jabatan', $karyawan->karyawan->id_jabatan);
+        // });
 
         $penilaianKaryawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
@@ -99,7 +104,16 @@ class PenilaianKaryawanController extends Controller
                     ->whereYear('tgl_nilai', $year);
             }
         )
-            ->whereIn('id_jabatan', $childJabatan->pluck('id'));
+            ->where('id', '<>', $karyawan->id_karyawan);
+
+        // $penilaianKaryawans->when($childJabatan->isNotEmpty(), function ($query) use ($childJabatan) {
+        //     $query->whereIn('id_jabatan', $childJabatan->pluck('id'));
+        // });
+
+        // $penilaianKaryawans->when($childJabatan->isEmpty(), function ($query) use ($karyawan) {
+        //     $query->where('id_unit', $karyawan->karyawan->id_unit)
+        //         ->where('id_jabatan', $karyawan->karyawan->id_jabatan);
+        // });
 
         $karyawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
@@ -127,7 +141,9 @@ class PenilaianKaryawanController extends Controller
         $idJabatanKinerja = $karyawan->id_jabatan;
 
         $mPenilaian = MTipe::with([
-            'penilaian',
+            'penilaian' => function ($query) {
+                $query->whereHas('subPenilaian');
+            },
             'penilaian.subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai, $idJabatanKinerja) {
 
                 $query->select('id', 'id_penilaian', 'nama');
@@ -228,11 +244,12 @@ class PenilaianKaryawanController extends Controller
 
                 $tipePenilaianData = [
                     'id_pk' => $storePenilaian->id,
+                    'id_tipe' => $tipePenilaian['id'],
                     'nama_tipe' => $tipePenilaian['nama'],
                     'tipe_pk' => $tipePenilaian['tipe'],
                     'catatan' => optional($tipePenilaian)['catatan'],
-                    'id_karyawan' => auth()->user()->karyawan->id,
-                    'nama_penilai' => auth()->user()->karyawan->nama,
+                    'id_karyawan' => $penilai->id,
+                    'nama_penilai' => $tipePenilaian['check'] > 0 ? $penilai->nama : null,
                 ];
 
                 $storeTipePenilaian = TipePenilaian::create($tipePenilaianData);
@@ -277,7 +294,7 @@ class PenilaianKaryawanController extends Controller
                         'ttl_nilai' => $params['detail_ttl'],
                         'rata_nilai' => $rataNilai,
                         'id_penilai' => $penilai->id,
-                        'nama_penilai' => $penilai->nama,
+                        'nama_penilai' => $tipePenilaian['check'] > 0 ? $penilai->nama : null,
                         'jabatan_penilai' => $penilai->jabatan->nama,
                         'updated_by' => $params['updated_by']
                     ];
@@ -316,6 +333,7 @@ class PenilaianKaryawanController extends Controller
             DB::commit();
 
             $data['data']['message'] = 'Tindakan Berhasil !';
+            $data['data']['data'] = $storePenilaian;
             $data['data']['status'] = Response::HTTP_CREATED;
         } catch (\Throwable $th) {
 
@@ -332,6 +350,7 @@ class PenilaianKaryawanController extends Controller
     {
         try {
 
+            // $idJabatanPenilai = User::find(19)->karyawan->id_jabatan;
             $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
 
             $penilaian = PenilaianKaryawan::with([
@@ -387,43 +406,41 @@ class PenilaianKaryawanController extends Controller
 
             foreach ($input['penilaian']['relationship']['tipe_penilaian'] as $tipe) {
 
-                if ($tipe['check_penilai'] > 1) {
+                if (intval($tipe['check_penilai']) > 0) {
 
                     foreach ($tipe['relationship']['detail'] as $detail) {
                         $avgDetail = 0;
                         $sumDetail = 0;
 
                         foreach ($detail['relationship']['sub'] as $sub) {
-                            $sumDetail += $sub['nilai'];
-                            $sub = SubPenilaianKaryawan::find($sub['id']);
-                            $sub->update([
-                                'nilai' => $sub['nilai']
-                            ]);
-                        }
 
-                        $detail = DetailPenilaian::find($detail['id']);
-                        $detail->update([
-                            'ttl_nilai' => $sumDetail,
-                            'rata_nilai' => $avgDetail,
-                        ]);
+                            $sumDetail += intval($sub['nilai']);
+                            $getSub = SubPenilaianKaryawan::find($sub['id']);
+                            $getSub->nilai = $sub['nilai'];
+                            $getSub->save();
+                        }
+                        // Average Detail Penilaian
+                        $avgDetail = $sumDetail / count($detail['relationship']['sub']);
+
+                        $getDetail = DetailPenilaian::find($detail['id']);
+                        $getDetail->ttl_nilai = $sumDetail;
+                        $getDetail->rata_nilai = $avgDetail;
+                        $getDetail->save();
                     }
 
                     $userPenilai = auth()->user();
 
-                    $tipePenilaianData = [
-                        'catatan' => optional($tipe)['catatan'],
-                        'id_karyawan' => $userPenilai->karyawan->id,
-                        'nama_penilai' => $userPenilai->karyawan->nama,
-                    ];
-
-                    $tipePenilaian = TipePenilaian::find($tipe);
-                    $tipePenilaian->update($tipePenilaianData);
+                    $tipePenilaian = TipePenilaian::find($tipe['id']);
+                    $tipePenilaian->catatan = optional($tipe)['catatan'];
+                    $tipePenilaian->id_karyawan = $userPenilai->karyawan->id;
+                    $tipePenilaian->nama_penilai = $userPenilai->karyawan->nama;
+                    $tipePenilaian->save();
                 }
             }
 
-            $getPenilaian->ttl_nilai = $ttlNilai;
-            $getPenilaian->rata_nilai = $avgNilai;
-            $getPenilaian->save();
+            // $getPenilaian->ttl_nilai = $ttlNilai;
+            // $getPenilaian->rata_nilai = $avgNilai;
+            // $getPenilaian->save();
 
             // Analisis Swot;
             // $swot = AnalisisSwot::find($getPenilaian->id);
