@@ -90,15 +90,17 @@ class MSubPenilaianController extends Controller
         $formData = [];
 
         foreach ($data['nama'] as $nama) {
-            array_push($formData, [
-                'nama' => strtoupper($nama['nama']),
-                'id_penilaian' => $data['id_penilaian'],
-                'id_jabatan_penilai' => !is_null(optional($data)['id_jabatan_penilai']) ? $data['id_jabatan_penilai'] : null,
-                'id_jabatan_kinerja' => !is_null(optional($data)['id_jabatan_kinerja']) ? $data['id_jabatan_kinerja'] : null,
-                'id_unit_penilai' => !is_null(optional($data)['id_unit_penilai']) ? $data['id_unit_penilai'] : null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if (!is_null($nama['nama']) || $nama['nama'] != '') {
+                array_push($formData, [
+                    'nama' => strtoupper($nama['nama']),
+                    'id_penilaian' => $data['id_penilaian'],
+                    'id_jabatan_penilai' => !is_null(optional($data)['id_jabatan_penilai']) ? $data['id_jabatan_penilai'] : null,
+                    'id_jabatan_kinerja' => !is_null(optional($data)['id_jabatan_kinerja']) ? $data['id_jabatan_kinerja'] : null,
+                    'id_unit_penilai' => !is_null(optional($data)['id_unit_penilai']) ? $data['id_unit_penilai'] : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         try {

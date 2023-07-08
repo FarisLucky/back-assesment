@@ -25,6 +25,16 @@ class MTipe extends Model
         'updated_at' => 'datetime',
     ];
 
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function (MTipe $tipe) {
+            $tipe->penilaian()->delete();
+        });
+    }
+
     /**
      * Get all of the penilaian for the MTipe
      *

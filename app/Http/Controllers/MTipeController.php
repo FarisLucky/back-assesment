@@ -46,13 +46,11 @@ class MTipeController extends Controller
 
     public function data()
     {
-        $tipe = MTipe::leftJoin('m_tipe_penilaian', 'm_tipe.id', '=', 'm_tipe_penilaian.id_tipe')
-            ->select(
-                DB::raw('m_tipe.id'),
-                DB::raw('m_tipe.nama'),
-                DB::raw('m_tipe.tipe'),
-            )
-            ->whereNull('m_tipe_penilaian.id_tipe')
+        $tipe = MTipe::select(
+            DB::raw('m_tipe.id'),
+            DB::raw('m_tipe.nama'),
+            DB::raw('m_tipe.tipe'),
+        )
             ->get();
 
         return MTipeResource::collection($tipe);

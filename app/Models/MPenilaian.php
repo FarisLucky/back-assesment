@@ -29,7 +29,8 @@ class MPenilaian extends Model
     public static function boot()
     {
         parent::boot();
-        static::deleting(function ($penilaian) {
+
+        static::deleting(function (MPenilaian $penilaian) {
             $penilaian->subPenilaian()->delete();
         });
     }

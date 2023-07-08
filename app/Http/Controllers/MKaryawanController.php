@@ -83,7 +83,7 @@ class MKaryawanController extends Controller
 
     public function show($id)
     {
-        $karyawan = MKaryawan::findOrFail($id);
+        $karyawan = MKaryawan::with('jabatan')->findOrFail($id);
 
         return response()->json(
             new MKaryawanResource($karyawan),

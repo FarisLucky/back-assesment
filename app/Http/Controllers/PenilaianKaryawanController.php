@@ -161,10 +161,17 @@ class PenilaianKaryawanController extends Controller
 
         $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
 
-        $mPenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian) {
-            $tipe->check = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
-                ->where('id_tipe', $tipe->id)
-                ->count();
+        $tipeParams = $tipe;
+
+        $mPenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian, $tipeParams) {
+
+            if ($tipeParams == MPenilaian::TIPE[0]) {
+                $tipe->check = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
+                    ->where('id_tipe', $tipe->id)
+                    ->count();
+            } else {
+                $tipe->check = true;
+            }
 
             $tipe->penilaian = $tipe->penilaian->map(function ($nilai) {
                 $nilai->sub_count = $nilai->subPenilaian->count();
@@ -174,6 +181,7 @@ class PenilaianKaryawanController extends Controller
 
             return $tipe;
         });
+
 
         return MTipeResource::collection($mPenilaian);
     }
@@ -239,6 +247,9 @@ class PenilaianKaryawanController extends Controller
             $storePenilaian = PenilaianKaryawan::create($penilaianData);
 
             // throw new HttpException(500, $penilai->id);
+            $ttlRataNilai = 0;
+            $countNilai = 0;
+            $rataNilai = 0;
 
             foreach ($input['penilaians'] as $tipePenilaian) {
 
@@ -309,12 +320,15 @@ class PenilaianKaryawanController extends Controller
                     }, $subDetail);
 
                     SubPenilaianKaryawan::insert($subDetail); // insert batch semua sub penilaian pada detail penilaian
+
+                    $ttlRataNilai += $rataNilai;
+                    $countNilai++;
                 }
             }
 
-            $storePenilaian->ttl_nilai = $params['penilaian_ttl'];
-            if ($params['penilaian_ttl'] > 0) {
-                $storePenilaian->rata_nilai = $params['penilaian_ttl'] / $params['jml_indikator']; // rata rata nilai => ttl_nilai dibagi banyak indikator
+            $storePenilaian->ttl_nilai = $ttlRataNilai;
+            if ($ttlRataNilai > 0) {
+                $storePenilaian->rata_nilai = $ttlRataNilai / $countNilai; // rata rata nilai => ttl_nilai dibagi banyak indikator
             } else {
                 $storePenilaian->rata_nilai = 0; // rata rata nilai => ttl_nilai dibagi banyak indikator
             }
@@ -364,10 +378,16 @@ class PenilaianKaryawanController extends Controller
 
             $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
 
-            $penilaian->tipePenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian) {
-                $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
-                    ->where('id_tipe', $tipe->id_tipe)
-                    ->count();
+            $tipeParams = $penilaian->tipe;
+
+            $penilaian->tipePenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian, $tipeParams) {
+                if ($tipeParams == MPenilaian::TIPE[0]) {
+                    $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
+                        ->where('id_tipe', $tipe->id_tipe)
+                        ->count();
+                } else {
+                    $tipe->check_penilai = true;
+                }
 
                 return $tipe;
             });
@@ -401,8 +421,9 @@ class PenilaianKaryawanController extends Controller
                 throw new Exception('Penilaian Belum Ada');
             }
 
-            $ttlNilai = 0;
-            $avgNilai = 0;
+            $countTipe = 0;
+
+            $ttlRataNilai = 0;
 
             foreach ($input['penilaian']['relationship']['tipe_penilaian'] as $tipe) {
 
@@ -438,9 +459,16 @@ class PenilaianKaryawanController extends Controller
                 }
             }
 
-            // $getPenilaian->ttl_nilai = $ttlNilai;
-            // $getPenilaian->rata_nilai = $avgNilai;
-            // $getPenilaian->save();
+            $details = DetailPenilaian::select('id_pk', 'rata_nilai')->where('id_pk', $getPenilaian->id)->get();
+            $countTipe = $details->count();
+
+            $details->each(function ($detail) use (&$ttlRataNilai) {
+                $ttlRataNilai += $detail->rata_nilai;
+            });
+
+            $getPenilaian->ttl_nilai = $ttlRataNilai;
+            $getPenilaian->rata_nilai = $ttlRataNilai / $countTipe;
+            $getPenilaian->save();
 
             // Analisis Swot;
             // $swot = AnalisisSwot::find($getPenilaian->id);
