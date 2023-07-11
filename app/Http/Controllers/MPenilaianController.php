@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\SearchingTrait;
 use App\Http\Requests\StoreMPenilaianRequest;
 use App\Http\Requests\UpdateMPenilaianRequest;
 use App\Http\Resources\Api\MPenilaianResource;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class MPenilaianController extends Controller
 {
+    use SearchingTrait;
 
     public function index()
     {
@@ -25,9 +27,25 @@ class MPenilaianController extends Controller
 
         $penilaians = MPenilaian::with('mTipe');
 
-        $penilaians->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
+        $relations = $this->getRelations(MPenilaian::class);
+
+        $penilaians->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter, $relations) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
-                $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+
+                if ($this->checkRelation($columnKeyFilter[$i])) {
+
+                    $relationQuery = $this->explodeColumnName($columnKeyFilter[$i]);
+
+                    $getRelation = $this->searchRelation($relations, $relationQuery[1]);
+
+                    $relation = $this->keyRelationFirst($getRelation);
+
+                    $query->whereHas($relation, function ($query) use ($columnValFilter, $relationQuery, $i) {
+                        $query->where($relationQuery[2], 'LIKE', "%{$columnValFilter[$i]}%");
+                    });
+                } else {
+                    $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+                }
             }
         });
 

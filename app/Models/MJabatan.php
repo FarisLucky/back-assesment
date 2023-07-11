@@ -22,32 +22,10 @@ class MJabatan extends Model
         "updated_at" => "datetime",
     ];
 
-    protected $appends = ['level_custom'];
+    // protected $appends = ['level_custom'];
 
-    public function jabatan()
+    public function parent()
     {
         return $this->belongsTo(MJabatan::class, 'id_parent');
-    }
-
-    public function parentJabatan()
-    {
-        return $this->belongsTo(MJabatan::class, 'id_parent')->with('jabatan');
-    }
-
-    public function getLevelCustomAttribute()
-    {
-        return $this->getParent($this->id);
-    }
-
-    public function getParent($id, $depth = 0)
-    {
-        $model = MJabatan::where('id', $id)->first();
-        if (!is_null($model)) {
-            $depth++;
-
-            return $this->getParent($model->id_parent, $depth);
-        } else {
-            return $depth;
-        }
     }
 }

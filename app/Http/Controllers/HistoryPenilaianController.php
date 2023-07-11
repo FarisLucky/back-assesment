@@ -28,10 +28,8 @@ class HistoryPenilaianController extends Controller
             ->get();
 
         $karyawans = MKaryawan::with([
-            'penilaianKaryawan' => function ($query) {
-                $query->whereMonth('created_at', date('m'))
-                    ->whereYear('created_at', date('Y'));
-            }
+            'jabatan',
+            'penilaianKaryawan'
         ])
             ->where('id', '<>', auth()->user()->id_karyawan);
 
@@ -41,7 +39,28 @@ class HistoryPenilaianController extends Controller
 
         $karyawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
-                $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+                if (str_contains($columnKeyFilter[$i], '.')) {
+
+                    $query->whereHas('jabatan', function ($query) use ($columnValFilter, $columnKeyFilter, $i) {
+                        $column = explode('.', $columnKeyFilter[$i])[2];
+                        $query->where($column, 'LIKE', "%{$columnValFilter[$i]}%");
+                    });
+                } elseif ($columnKeyFilter[$i] == 'month') {
+
+                    $query->whereHas('penilaianKaryawan', function ($query) use ($columnValFilter, $i) {
+                        $query->filterByMonth($columnValFilter[$i])
+                            ->filterByYear($columnValFilter[$i + 1]);
+                    });
+                    break;
+                } elseif ($columnKeyFilter[$i] == 'year') {
+
+                    $query->whereHas('penilaianKaryawan', function ($query) use ($columnValFilter, $i) {
+                        $query->filterByYear($columnValFilter[$i]);
+                    });
+                } else {
+
+                    $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+                }
             }
         });
 
@@ -50,6 +69,8 @@ class HistoryPenilaianController extends Controller
         }, function ($query) {
             $query->orderBy('id', 'desc');
         });
+
+        // return response()->json($karyawans->toSql());
 
         return MKaryawanResource::collection(
             $karyawans->latest()->paginate($page)

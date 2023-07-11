@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Services\PenilaianKaryawanServices;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class PenilaianKaryawanController extends Controller
@@ -65,9 +66,20 @@ class PenilaianKaryawanController extends Controller
         //         ->where('id_jabatan', $karyawan->karyawan->id_jabatan);
         // });
 
-        $penilaianKaryawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
+        $relations = Arr::get(config('relationship'), MKaryawan::class);
+        $penilaianKaryawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter, $relations) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
-                $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+                if (str_contains($columnKeyFilter[$i], '.')) {
+                    // $relation = array_filter($relations, function ($relation) {
+                    //     return $relation == $
+                    // });
+                    $query->whereHas('jabatan', function ($query) use ($columnValFilter, $columnKeyFilter, $i) {
+                        $column = explode('.', $columnKeyFilter[$i])[2];
+                        $query->where($column, 'LIKE', "%{$columnValFilter[$i]}%");
+                    });
+                } else {
+                    $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+                }
             }
         });
 
@@ -137,6 +149,8 @@ class PenilaianKaryawanController extends Controller
 
         $karyawan = MKaryawan::where('id', $idKaryawan)->firstOrFail();
 
+        $parent = $karyawan->load('jabatan');
+
         $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
         $idJabatanKinerja = $karyawan->id_jabatan;
 
@@ -163,13 +177,22 @@ class PenilaianKaryawanController extends Controller
 
         $tipeParams = $tipe;
 
-        $mPenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian, $tipeParams) {
+        $mPenilaian->transform(function ($tipe) use ($idJabatanPenilai, $parent, $getTipePenilaian, $tipeParams) {
 
             if ($tipeParams == MPenilaian::TIPE[0]) {
                 $tipe->check = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
                     ->where('id_tipe', $tipe->id)
                     ->count();
+
+                // if ($parent->jabatan->id_parent == $idJabatanPenilai) {
+                //     $tipe->check = 1;
+                // }
+
+                // $parent = $parent->jabatan->id_parent == $idJabatanPenilai ? 1 : 0;
+
+                // $tipe->check = $parent == $tipe->check ? 1 : 0;
             } else {
+
                 $tipe->check = true;
             }
 
@@ -368,6 +391,7 @@ class PenilaianKaryawanController extends Controller
             $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
 
             $penilaian = PenilaianKaryawan::with([
+                'karyawan.jabatan', // tipe penilaian relationship
                 'tipePenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
@@ -385,6 +409,8 @@ class PenilaianKaryawanController extends Controller
                     $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
                         ->where('id_tipe', $tipe->id_tipe)
                         ->count();
+                    $parent = $tipe->karyawan->jabatan->where('id_parent', $idJabatanPenilai)->count();
+                    $tipe->check = $tipe->check + optional($parent)->count();
                 } else {
                     $tipe->check_penilai = true;
                 }

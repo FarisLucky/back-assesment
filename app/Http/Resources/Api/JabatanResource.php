@@ -22,8 +22,10 @@ class JabatanResource extends JsonResource
             'level' =>  $this->level,
             'id_parent' => $this->id_parent,
             'relationship' => [
-                'jabatan' => new JabatanResource($this->whenLoaded('jabatan'))
-            ]
+                'parent' => new JabatanResource($this->whenLoaded('parent'))
+            ],
+            'created_at' => optional($this->created_at)->isoFormat('L'),
+            'updated_at' => optional($this->updated_at)->isoFormat('L'),
         ];
     }
 }

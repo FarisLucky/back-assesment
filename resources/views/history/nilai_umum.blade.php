@@ -35,11 +35,11 @@
     </table>
 
     <table class="bordered">
-        <thead>
-            <th style="width: 3%">No</th>
-            <th style="width: 30%">Unsur</th>
-            <th>Sub Unsur - Nilai</th>
-        </thead>
+        <tr>
+            <td style="width: 3%">No</td>
+            <td style="width: 30%">Unsur</td>
+            <td>Sub Unsur - Nilai</td>
+        </tr>
         <tbody>
             @foreach ($nilai->tipePenilaian as $tipe)
                 <tr>
@@ -72,6 +72,16 @@
                         </td>
                     </tr>
                 @endforeach
+                <tr>
+                    <td colspan="2" style="padding: .5rem;">
+                        <p style="margin-bottom: .5rem; border-bottom: 1px solid black">Catatan:</p>
+                        <p>{{ $tipe->catatan }}</p>
+                    </td>
+                    <td class="text-end">
+                        <p>Yang Memberi Penilaian: </p>
+                        <p style="margin-top: 2rem">{{ $tipe->nama_penilai ?? '-' }}</p>
+                    </td>
+                </tr>
             @endforeach
             <tr>
                 <td colspan="2">Kecakapan bidang tugas</td>
@@ -92,25 +102,25 @@
         <tbody>
             <tr>
                 <td style="width: 50%">
-                    <strong>Kelebihan</strong>
+                    <strong class="swot">Kelebihan</strong>
+                    <p>
+                        {{ $nilai->analisisSwot->kelebihan ?? '-' }}
+                    </p>
                 <td>
-                    <strong>Kekurangan</strong>
+                    <strong class="swot">Kekurangan</strong>
+                    <p>
+                        {{ $nilai->analisisSwot->kekurangan ?? '-' }}
+                    </p>
                 </td>
             </tr>
             <tr>
-                <td>Isi</td>
-                <td>Isi</td>
-            </tr>
-            <tr>
                 <td>
-                    <strong>Oportunity/ Kesempatan</strong>
+                    <strong class="swot">Oportunity/ Kesempatan</strong>
+                    <p>{{ $nilai->analisisSwot->kesempatan ?? '-' }}</p>
                 <td>
-                    <strong>Threat/ Ancaman</strong>
+                    <strong class="swot">Threat/ Ancaman</strong>
+                    <p>{{ $nilai->analisisSwot->ancaman ?? '-' }}</p>
                 </td>
-            </tr>
-            <tr>
-                <td>Isi</td>
-                <td>Isi</td>
             </tr>
         </tbody>
     </table>

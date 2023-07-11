@@ -39,6 +39,20 @@ class PenilaianKaryawan extends Model
         'tgl_nilai' => 'date',
     ];
 
+    public function scopeFilterByMonth($query, $month)
+    {
+        $month = is_null($month) ? date('m') : $month;
+
+        return $query->whereMonth('created_at', $month);
+    }
+
+    public function scopeFilterByYear($query, $year)
+    {
+        $year = is_null($year) ? date('Y') : $year;
+
+        return $query->whereYear('created_at', $year);
+    }
+
     public function detail()
     {
         return $this->hasMany(DetailPenilaian::class, 'id_pk');
