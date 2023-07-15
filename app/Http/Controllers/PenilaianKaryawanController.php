@@ -184,9 +184,9 @@ class PenilaianKaryawanController extends Controller
                     ->where('id_tipe', $tipe->id)
                     ->count();
 
-                // if ($parent->jabatan->id_parent == $idJabatanPenilai) {
-                //     $tipe->check = 1;
-                // }
+                if ($parent->jabatan->id_parent != $idJabatanPenilai) {
+                    $tipe->check = 0;
+                }
 
                 // $parent = $parent->jabatan->id_parent == $idJabatanPenilai ? 1 : 0;
 

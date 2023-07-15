@@ -31,6 +31,7 @@ class PenilaianKaryawan extends Model
         'validasi_by',
         'created_by',
         'updated_by',
+        'kategori',
     ];
 
     public $casts = [

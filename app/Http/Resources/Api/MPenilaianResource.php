@@ -18,6 +18,7 @@ class MPenilaianResource extends JsonResource
             'id' => $this->id,
             'nama' => $this->nama,
             'tipe' => $this->tipe,
+            'bobot' => $this->bobot,
             'id_tipe' => $this->id_tipe,
             'id_tipe' => $this->id_tipe,
             'sub_count' => $this->sub_count,

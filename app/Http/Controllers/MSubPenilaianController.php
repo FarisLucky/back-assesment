@@ -71,13 +71,30 @@ class MSubPenilaianController extends Controller
 
     public function data()
     {
-        $units = MSubPenilaian::select(
-            'id',
-            'nama',
-            'id_jabatan_penilai',
-            'id_jabatan_kinerja',
-            'id_unit_penilai',
-        )
+        $units = MSubPenilaian::with('penilaian')
+            ->select(
+                'id',
+                'nama',
+                'id_jabatan_penilai',
+                'id_jabatan_kinerja',
+                'id_unit_penilai',
+            )
+            ->get();
+
+        return MSubPenilaianResource::collection($units);
+    }
+    public function dataKhusus()
+    {
+        $units = MSubPenilaian::with([
+            'penilaian'
+        ])
+            ->select(
+                'id',
+                'nama',
+                'id_jabatan_penilai',
+                'id_jabatan_kinerja',
+                'id_unit_penilai',
+            )
             ->get();
 
         return MSubPenilaianResource::collection($units);
@@ -99,6 +116,7 @@ class MSubPenilaianController extends Controller
                     'id_unit_penilai' => !is_null(optional($data)['id_unit_penilai']) ? $data['id_unit_penilai'] : null,
                     'created_at' => now(),
                     'updated_at' => now(),
+                    'kategori' => $data['kategori'],
                 ]);
             }
         }

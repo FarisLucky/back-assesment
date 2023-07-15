@@ -19,6 +19,7 @@ class MPenilaian extends Model
         'nama',
         'tipe',
         'id_tipe',
+        'bobot'
     ];
 
     public $casts = [

@@ -44,21 +44,12 @@ class CreateMastersTable extends Migration
             $table->id();
             $table->unsignedSmallInteger('id_penilaian');
             $table->string('nama', 150)->nullable();
-            // $table->string('type', 10)->nullable();
             $table->unsignedSmallInteger('id_jabatan_penilai')->nullable();
             $table->unsignedSmallInteger('id_jabatan_kinerja')->nullable();
-            $table->unsignedSmallInteger('id_unit_penilai')->nullable();
-            $table->unsignedBigInteger('id_parent')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
-        Schema::table('m_penilaian', function (Blueprint $table) {
-            $table->foreign('id_jabatan_penilai')
-                ->references('id')
-                ->on('m_jabatan')
-                ->restrictOnUpdate();
-        });
         Schema::table('m_sub_penilaian', function (Blueprint $table) {
             $table->foreign('id_penilaian')
                 ->references('id')
@@ -72,10 +63,6 @@ class CreateMastersTable extends Migration
                 ->references('id')
                 ->on('m_jabatan')
                 ->restrictOnUpdate();
-            $table->foreign('id_unit_penilai')
-                ->references('id')
-                ->on('m_unit')
-                ->restrictOnUpdate();
         });
     }
 
@@ -86,11 +73,9 @@ class CreateMastersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('unit');
-        Schema::dropIfExists('jabatan');
-        Schema::dropIfExists('penilaian');
-        Schema::dropIfExists('sub_penilaian');
-        Schema::dropIfExists('kategori_penilaian');
-        Schema::dropIfExists('detail_kategori');
+        Schema::dropIfExists('m_unit');
+        Schema::dropIfExists('m_jabatan');
+        Schema::dropIfExists('m_penilaian');
+        Schema::dropIfExists('m_sub_penilaian');
     }
 }

@@ -72,25 +72,38 @@ class MPenilaianController extends Controller
 
     public function store(StoreMPenilaianRequest $request)
     {
+
         $data = $request->validated();
+
         try {
             DB::beginTransaction();
 
             $data = array_merge($data, [
-                'tipe' => optional(MTipe::find($request->id_tipe, ['tipe']))->tipe,
+                'tipe' => optional(
+                    MTipe::find($request->id_tipe, ['tipe'])
+                )->tipe,
             ]);
+
+            if ($request->has('bobot')) {
+                $data['bobot'] = $request->bobot;
+            }
 
             MPenilaian::create($data);
 
             DB::commit();
+
+            return response()->json(
+                'Tindakan Berhasil',
+                Response::HTTP_OK
+            );
         } catch (\Throwable $th) {
             DB::rollBack();
-        }
 
-        return response()->json(
-            'Tindakan Berhasil',
-            Response::HTTP_OK
-        );
+            return response()->json(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     public function show(MPenilaian $penilaian)
@@ -114,10 +127,10 @@ class MPenilaianController extends Controller
                 'id_jabatan_penilai' => request('id_jabatan_penilai'),
                 'level' => $getLevel->level
             ]);
+        }
 
-            if ($data['tipe'] == MPenilaian::TIPE[0]) { // tipe umum
-                $data['id_jabatan_penilai'] = null;
-            }
+        if ($request->has('bobot')) {
+            $data['bobot'] = $request->bobot;
         }
 
         $penilaian->update($data);

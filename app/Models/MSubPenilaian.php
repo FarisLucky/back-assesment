@@ -9,6 +9,10 @@ class MSubPenilaian extends Model
 {
     use SoftDeletes;
 
+    const MEDIS = 1;
+
+    const NON_MEDIS = 0;
+
     protected $table = "m_sub_penilaian";
 
     protected $fillable = [
@@ -18,6 +22,7 @@ class MSubPenilaian extends Model
         'id_jabatan_kinerja',
         'id_unit_penilai',
         'id_parent',
+        'kategori'
     ];
 
     public $casts = [
@@ -29,17 +34,17 @@ class MSubPenilaian extends Model
     {
         return $this->belongsTo(MPenilaian::class, 'id_penilaian');
     }
-	
+
     public function jabatanPenilai()
     {
         return $this->belongsTo(MJabatan::class, 'id_jabatan_penilai');
     }
-	
+
     public function jabatanKinerja()
     {
         return $this->belongsTo(MJabatan::class, 'id_jabatan_kinerja');
     }
-	
+
     public function unitPenilai()
     {
         return $this->belongsTo(MUnit::class, 'id_unit_penilai');

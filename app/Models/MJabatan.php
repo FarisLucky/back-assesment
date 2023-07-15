@@ -9,6 +9,10 @@ class MJabatan extends Model
 {
     use SoftDeletes;
 
+    const MEDIS = 1;
+
+    const NON_MEDIS = 0;
+
     protected $table = "m_jabatan";
 
     protected $fillable = [
