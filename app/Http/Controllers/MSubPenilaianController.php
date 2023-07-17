@@ -6,6 +6,7 @@ use App\Models\MSubPenilaian;
 use App\Http\Requests\StoreMSubPenilaianRequest;
 use App\Http\Requests\UpdateMSubPenilaianRequest;
 use App\Http\Resources\Api\MSubPenilaianResource;
+use App\Models\MPenilaian;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -20,16 +21,13 @@ class MSubPenilaianController extends Controller
         $sortType = request('sort_type');
 
         $subPenilaians = MSubPenilaian::leftJoin('m_penilaian', 'm_penilaian.id', '=', 'm_sub_penilaian.id_penilaian')
-            ->leftJoin('m_jabatan as jabatan_penilai', 'jabatan_penilai.id', '=', 'm_sub_penilaian.id_jabatan_penilai')
-            ->leftJoin('m_jabatan as jabatan_kinerja', 'jabatan_kinerja.id', '=', 'm_sub_penilaian.id_jabatan_kinerja')
             ->select(
                 'm_sub_penilaian.id',
                 'm_sub_penilaian.nama',
+                'm_sub_penilaian.kategori',
                 'm_sub_penilaian.created_at',
                 'm_penilaian.tipe as penilaian_tipe',
                 'm_penilaian.nama as penilaian_nama',
-                'jabatan_penilai.nama as jabatan_penilai_nama',
-                'jabatan_kinerja.nama as jabatan_kinerja_nama',
             );
 
         $subPenilaians->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
@@ -83,6 +81,7 @@ class MSubPenilaianController extends Controller
 
         return MSubPenilaianResource::collection($units);
     }
+
     public function dataKhusus()
     {
         $units = MSubPenilaian::with([
@@ -91,10 +90,16 @@ class MSubPenilaianController extends Controller
             ->select(
                 'id',
                 'nama',
-                'id_jabatan_penilai',
-                'id_jabatan_kinerja',
-                'id_unit_penilai',
+                'id_penilaian',
             )
+            ->whereHas('penilaian', function ($query) {
+                $query->where('tipe', MPenilaian::TIPE[1]);
+            })
+            ->whereDoesntHave('mValidasiPenilai', function ($query) {
+                $query->where('id_jabatan_penilai', auth()->user()->karyawan->id_jabatan)
+                    ->orWhereNull('id_jabatan_penilai');
+            })
+            ->where('kategori', auth()->user()->karyawan->jabatan->kategori)
             ->get();
 
         return MSubPenilaianResource::collection($units);
@@ -111,9 +116,6 @@ class MSubPenilaianController extends Controller
                 array_push($formData, [
                     'nama' => strtoupper($nama['nama']),
                     'id_penilaian' => $data['id_penilaian'],
-                    'id_jabatan_penilai' => !is_null(optional($data)['id_jabatan_penilai']) ? $data['id_jabatan_penilai'] : null,
-                    'id_jabatan_kinerja' => !is_null(optional($data)['id_jabatan_kinerja']) ? $data['id_jabatan_kinerja'] : null,
-                    'id_unit_penilai' => !is_null(optional($data)['id_unit_penilai']) ? $data['id_unit_penilai'] : null,
                     'created_at' => now(),
                     'updated_at' => now(),
                     'kategori' => $data['kategori'],
@@ -154,14 +156,6 @@ class MSubPenilaianController extends Controller
         $data = $request->validated();
 
         $data = array_merge($data, ['nama' => $request->nama[0]['nama']]);
-
-        if ($request->has('id_jabatan_penilai')) {
-            $data = array_merge($data, ['id_jabatan_penilai' => $request->id_jabatan_penilai]);
-        }
-
-        if ($request->has('id_jabatan_kinerja')) {
-            $data = array_merge($data, ['id_jabatan_kinerja' => $request->id_jabatan_kinerja]);
-        }
 
         $mSubPenilaian->update($data);
 

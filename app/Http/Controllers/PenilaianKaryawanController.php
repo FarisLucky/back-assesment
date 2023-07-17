@@ -156,22 +156,26 @@ class PenilaianKaryawanController extends Controller
 
         $mPenilaian = MTipe::with([
             'penilaian' => function ($query) {
-                $query->whereHas('subPenilaian');
+                $query->whereHas('subPenilaian')
+                    ->orderBy('order');
             },
-            'penilaian.subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai, $idJabatanKinerja) {
+            'penilaian.subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai, $idJabatanKinerja, $karyawan) {
 
                 $query->select('id', 'id_penilaian', 'nama');
-                $query->when($tipe == MPenilaian::TIPE[1], function ($query) use ($idJabatanPenilai, $idJabatanKinerja) {
-
-                    $query->where('id_jabatan_penilai', $idJabatanPenilai)
-                        ->where('id_jabatan_kinerja', $idJabatanKinerja);
-                });
+                if ($tipe == MPenilaian::TIPE[1]) {
+                    $query->whereHas('mValidasiPenilai', function ($query) use ($idJabatanPenilai) {
+                        $query->where('id_jabatan_penilai', $idJabatanPenilai)
+                            ->orWhereNull('id_jabatan_penilai');
+                    });
+                }
             }
         ])
             ->select('id', 'nama', 'tipe')
             ->whereHas('penilaian.subPenilaian')
             ->where('tipe', $tipe)
             ->get();
+
+        $mPenilaian->when($tipe == MPenilaian::TIPE[1]);
 
         $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
 
@@ -204,6 +208,7 @@ class PenilaianKaryawanController extends Controller
 
             return $tipe;
         });
+
 
 
         return MTipeResource::collection($mPenilaian);

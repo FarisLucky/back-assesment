@@ -10,6 +10,7 @@ use App\Http\Controllers\MPenilaianController;
 use App\Http\Controllers\MSubPenilaianController;
 use App\Http\Controllers\MTipeController;
 use App\Http\Controllers\MTipePenilaianController;
+use App\Http\Controllers\MValidasiPenilaiController;
 use App\Http\Controllers\PenilaianKaryawanController;
 use App\Http\Controllers\SubPenilaianKaryawanController;
 use App\Http\Controllers\UnitController;
@@ -67,6 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('sub-penilaians/all/data', [MSubPenilaianController::class, 'data'])
         ->name('mSub-penilaians.data');
+    Route::get('sub-penilaians/khusus/data', [MSubPenilaianController::class, 'dataKhusus'])
+        ->name('mSub-penilaians.dataKhusus');
     Route::apiResource('sub-penilaians', MSubPenilaianController::class)
         ->names('mSub-penilaians');
 
@@ -115,6 +118,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('tipes/all/data', [MTipeController::class, 'data'])
         ->name('mTipes.data');
+
+    Route::apiResource('m-validasi-penilai', MValidasiPenilaiController::class)
+        ->names('m-validasi-penilai');
 });
 /**
  * Authentication route

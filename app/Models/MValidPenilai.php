@@ -17,4 +17,14 @@ class MValidPenilai extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function mSubPenilaian()
+    {
+        return $this->belongsTo(MSubPenilaian::class, 'id_sub');
+    }
+
+    public function jabatanPenilai()
+    {
+        return $this->belongsTo(MJabatan::class, 'id_jabatan_penilai');
+    }
 }

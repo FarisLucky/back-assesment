@@ -27,8 +27,6 @@ class StoreMSubPenilaianRequest extends FormRequest
             'nama' => ['required'],
             'id_penilaian' => ['required', 'exists:m_penilaian,id'],
             'id_parent' => ['exists:m_sub_penilaian,id'],
-            'id_jabatan_penilai' => '',
-            'id_jabatan_kinerja' => '',
             'kategori' => ['required'],
         ];
     }

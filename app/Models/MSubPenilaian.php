@@ -30,6 +30,14 @@ class MSubPenilaian extends Model
         'updated_at' => 'datetime',
     ];
 
+    public function getKategoriDescAttribute()
+    {
+        if (is_null($this->kategori)) {
+            return 'ALL';
+        }
+        return $this->kategori == self::MEDIS ? 'MEDIS' : 'NON MEDIS';
+    }
+
     public function penilaian()
     {
         return $this->belongsTo(MPenilaian::class, 'id_penilaian');
@@ -48,5 +56,9 @@ class MSubPenilaian extends Model
     public function unitPenilai()
     {
         return $this->belongsTo(MUnit::class, 'id_unit_penilai');
+    }
+    public function mValidasiPenilai()
+    {
+        return $this->hasMany(MValidPenilai::class, 'id_sub');
     }
 }

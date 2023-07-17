@@ -43,4 +43,8 @@ return [
         'tipePenilaian' => 'analisis_swot',
         'subPenilaian' => 'analisis_swot',
     ],
+    'App\Models\MValidPenilai' => [
+        'mSubPenilaian' => 'm_sub_penilaian',
+        'jabatanPenilai' => 'jabatan_penilai',
+    ],
 ];
