@@ -112,6 +112,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('history-penilaian/{id}/{tipe}/{month}/{year}', [HistoryPenilaianController::class, 'show'])
         ->name('history-penilaian.show');
+    Route::get('history-penilaian/karyawan/{id_karyawan}/{tipe}', [HistoryPenilaianController::class, 'listPenilaians'])
+        ->name('history-penilaian.listPenilaians');
+    Route::get('history-penilaian/by-id/{id}', [HistoryPenilaianController::class, 'showById'])
+        ->name('history-penilaian.showById');
 
     Route::get('tipes/by/{tipe}', [MTipeController::class, 'tampilByTipe'])
         ->name('mTipes.data');

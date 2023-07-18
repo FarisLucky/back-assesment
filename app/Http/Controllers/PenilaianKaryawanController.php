@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\SearchingTrait;
 use App\Models\PenilaianKaryawan;
 use App\Models\MPenilaian;
 use App\Http\Requests\StorePenilaianKaryawanRequest;
@@ -20,12 +21,15 @@ use App\Models\TipePenilaian;
 use App\Models\User;
 use App\Services\PenilaianKaryawanServices;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class PenilaianKaryawanController extends Controller
 {
+    use SearchingTrait;
+
     public function index()
     {
         $page = request('per_page');
@@ -57,25 +61,20 @@ class PenilaianKaryawanController extends Controller
         ])
             ->where('id', '<>', $karyawan->id_karyawan);
 
-        // $penilaianKaryawans->when($childJabatan->isNotEmpty(), function ($query) use ($childJabatan) {
-        //     $query->whereIn('id_jabatan', $childJabatan->pluck('id'));
-        // });
-
-        // $penilaianKaryawans->when($childJabatan->isEmpty(), function ($query) use ($karyawan) {
-        //     $query->where('id_unit', $karyawan->karyawan->id_unit)
-        //         ->where('id_jabatan', $karyawan->karyawan->id_jabatan);
-        // });
-
         $relations = Arr::get(config('relationship'), MKaryawan::class);
         $penilaianKaryawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter, $relations) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
-                if (str_contains($columnKeyFilter[$i], '.')) {
-                    // $relation = array_filter($relations, function ($relation) {
-                    //     return $relation == $
-                    // });
-                    $query->whereHas('jabatan', function ($query) use ($columnValFilter, $columnKeyFilter, $i) {
-                        $column = explode('.', $columnKeyFilter[$i])[2];
-                        $query->where($column, 'LIKE', "%{$columnValFilter[$i]}%");
+
+                if ($this->checkRelation($columnKeyFilter[$i])) {
+
+                    $relationQuery = $this->explodeColumnName($columnKeyFilter[$i]);
+
+                    $getRelation = $this->searchRelation($relations, $relationQuery[1]);
+
+                    $relation = $this->keyRelationFirst($getRelation);
+
+                    $query->whereHas($relation, function ($query) use ($columnValFilter, $relationQuery, $i) {
+                        $query->where($relationQuery[2], 'LIKE', "%{$columnValFilter[$i]}%");
                     });
                 } else {
                     $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
@@ -102,45 +101,45 @@ class PenilaianKaryawanController extends Controller
         $month = date('m');
         $year = date('Y');
 
-        $karyawan = User::with('karyawan')->find(1);
+        $karyawan = auth()->user();
 
-        $childJabatan = MJabatan::select('id')
-            ->where('id_parent', $karyawan->karyawan->id_jabatan)
-            ->get();
+        DB::statement("SET SQL_MODE=''"); //this is the trick use it just before your query (untuk menghilangkah only_full_group_by)
+        $penilaians = PenilaianKaryawan::with('karyawan')
+            ->select('id', 'id_karyawan', 'jabatan', 'tipe', 'tgl_nilai', 'status')
+            ->whereMonth('tgl_nilai', $month)
+            ->whereYear('tgl_nilai', $year)
+            ->where('id_karyawan', '<>', $karyawan->id_karyawan);
 
-        $karyawans = MKaryawan::withWhereHas(
-            'penilaianKaryawan',
-            function ($query) use ($month, $year) {
-                $query->select('id', 'id_karyawan', 'tipe', 'tgl_nilai', 'status')
-                    ->whereMonth('tgl_nilai', $month)
-                    ->whereYear('tgl_nilai', $year);
-            }
-        )
-            ->where('id', '<>', $karyawan->id_karyawan);
+        $relations = Arr::get(config('relationship'), MKaryawan::class);
 
-        // $penilaianKaryawans->when($childJabatan->isNotEmpty(), function ($query) use ($childJabatan) {
-        //     $query->whereIn('id_jabatan', $childJabatan->pluck('id'));
-        // });
-
-        // $penilaianKaryawans->when($childJabatan->isEmpty(), function ($query) use ($karyawan) {
-        //     $query->where('id_unit', $karyawan->karyawan->id_unit)
-        //         ->where('id_jabatan', $karyawan->karyawan->id_jabatan);
-        // });
-
-        $karyawans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter) {
+        $penilaians->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter, $relations) {
             for ($i = 0; $i < count($columnKeyFilter); $i++) {
-                $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+
+                if ($this->checkRelation($columnKeyFilter[$i])) {
+
+                    $relationQuery = $this->explodeColumnName($columnKeyFilter[$i]);
+
+                    $getRelation = $this->searchRelation($relations, $relationQuery[1]);
+
+                    $relation = $this->keyRelationFirst($getRelation);
+
+                    $query->whereHas($relation, function ($query) use ($columnValFilter, $relationQuery, $i) {
+                        $query->where($relationQuery[2], 'LIKE', "%{$columnValFilter[$i]}%");
+                    });
+                } else {
+                    $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
+                }
             }
         });
 
-        $karyawans->when(!is_null($sortBy) && !is_null($sortType), function ($query) use ($sortBy, $sortType) {
+        $penilaians->when(!is_null($sortBy) && !is_null($sortType), function ($query) use ($sortBy, $sortType) {
             $query->orderBy($sortBy, $sortType);
         }, function ($query) {
             $query->orderBy('id', 'desc');
         });
 
-        return MKaryawanResource::collection(
-            $karyawans->latest()->paginate($page)
+        return PenilaianKaryawanResource::collection(
+            $penilaians->latest()->paginate($page)
         );
     }
 
@@ -152,14 +151,13 @@ class PenilaianKaryawanController extends Controller
         $parent = $karyawan->load('jabatan');
 
         $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
-        $idJabatanKinerja = $karyawan->id_jabatan;
 
         $mPenilaian = MTipe::with([
             'penilaian' => function ($query) {
                 $query->whereHas('subPenilaian')
                     ->orderBy('order');
             },
-            'penilaian.subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai, $idJabatanKinerja, $karyawan) {
+            'penilaian.subPenilaian' => function ($query) use ($tipe, $idJabatanPenilai) {
 
                 $query->select('id', 'id_penilaian', 'nama');
                 if ($tipe == MPenilaian::TIPE[1]) {
@@ -226,11 +224,15 @@ class PenilaianKaryawanController extends Controller
         $data = [];
 
         try {
+            $tglNilai = date('Y-m-d', mktime(0, 0, 0, $request->bulan_nilai, date('d'), $request->tahun_nilai));
 
             $getPenilaian = PenilaianKaryawan::where([
                 'id_karyawan' => $request->id_karyawan,
                 'tipe' => $request->tipe,
-            ])->whereMonth('created_at', date('Y-m-d'))->first();
+            ])
+                ->whereMonth('created_at', $request->bulan_nilai)
+                ->whereYear('created_at', $request->tahun_nilai)
+                ->first();
 
             if (!is_null($getPenilaian)) {
                 throw new Exception('Penilaian Sudah Ada');
@@ -253,8 +255,6 @@ class PenilaianKaryawanController extends Controller
                 'updated_by' => 3
             ];
 
-            // return response()->json(var_dump($input));
-
             $penilaianData =  [ // setup data penilaian
                 'id_karyawan' => $karyawan->id,
                 'nama_karyawan' => $karyawan->nama,
@@ -262,7 +262,7 @@ class PenilaianKaryawanController extends Controller
                 'id_penilai' => $penilai->id,
                 'nama_penilai' => $penilai->nama,
                 'jabatan_penilai' => $penilai->jabatan->nama,
-                'tgl_nilai' => date('Y-m-d'),
+                'tgl_nilai' => $tglNilai,
                 'ttl_nilai' => 0,
                 'rata_nilai' => 0,
                 'tipe' => $input['tipe'],
@@ -274,7 +274,6 @@ class PenilaianKaryawanController extends Controller
 
             $storePenilaian = PenilaianKaryawan::create($penilaianData);
 
-            // throw new HttpException(500, $penilai->id);
             $ttlRataNilai = 0;
             $countNilai = 0;
             $rataNilai = 0;
@@ -392,18 +391,21 @@ class PenilaianKaryawanController extends Controller
     {
         try {
 
-            // $idJabatanPenilai = User::find(19)->karyawan->id_jabatan;
             $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
 
             $penilaian = PenilaianKaryawan::with([
-                'karyawan.jabatan', // tipe penilaian relationship
+                // 'karyawan.jabatan', // tipe penilaian relationship
                 'tipePenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
                 'analisisSwot', // analisis swot relationship
             ])
                 ->where('id', $id)
-                ->firstOrFail();
+                ->first();
+
+            if (is_null($penilaian)) {
+                throw new ModelNotFoundException('Maaf penilaian belum ada !');
+            }
 
             $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
 
@@ -414,8 +416,8 @@ class PenilaianKaryawanController extends Controller
                     $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
                         ->where('id_tipe', $tipe->id_tipe)
                         ->count();
-                    $parent = $tipe->karyawan->jabatan->where('id_parent', $idJabatanPenilai)->count();
-                    $tipe->check = $tipe->check + optional($parent)->count();
+                    // $parent = $tipe->karyawan->jabatan->where('id_parent', $idJabatanPenilai)->count();
+                    // $tipe->check = $tipe->check + optional($parent)->count();
                 } else {
                     $tipe->check_penilai = true;
                 }
@@ -500,15 +502,6 @@ class PenilaianKaryawanController extends Controller
             $getPenilaian->ttl_nilai = $ttlRataNilai;
             $getPenilaian->rata_nilai = $ttlRataNilai / $countTipe;
             $getPenilaian->save();
-
-            // Analisis Swot;
-            // $swot = AnalisisSwot::find($getPenilaian->id);
-            // $swot->kelebihan = $request->analisis_swot['kelebihan'];
-            // $swot->kekurangan = $request->analisis_swot['kekurangan'];
-            // $swot->kesempatan = $request->analisis_swot['kesempatan'];
-            // $swot->ancaman = $request->analisis_swot['ancaman'];
-            // $swot->save();
-            // throw new Exception('test');
 
             DB::commit();
 

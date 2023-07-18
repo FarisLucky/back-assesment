@@ -35,6 +35,7 @@ class PenilaianKaryawanResource extends JsonResource
             'relationship' => [
                 'tipe_penilaian' => TipePenilaianResource::collection($this->whenLoaded('tipePenilaian')),
                 'analisis_swot' => new AnalisisSwotResource($this->whenLoaded('analisisSwot')),
+                'karyawan' => new MKaryawanResource($this->whenLoaded('karyawan')),
             ]
         ];
     }

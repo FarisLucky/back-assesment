@@ -77,12 +77,27 @@ class HistoryPenilaianController extends Controller
         );
     }
 
-    public function store(Request $request)
+    public function listPenilaians($idKaryawan, $tipe)
     {
-        //
+        try {
+            $penilaians = PenilaianKaryawan::select('id', 'tipe', 'nama_penilai', 'tgl_nilai')
+                ->where([
+                    'id_karyawan' => $idKaryawan,
+                    'tipe' => $tipe
+                ])
+                ->get();
+
+            return response()->json(PenilaianKaryawanResource::collection($penilaians));
+        } catch (\Throwable $th) {
+
+            return response()->json(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
-    public function show($idKaryawan, $tipe, $month, $year)
+    public function showById($id)
     {
         try {
 
@@ -92,12 +107,7 @@ class HistoryPenilaianController extends Controller
                 'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
                 'analisisSwot', // analisis swot relationship
             ])
-                ->where(function ($query) use ($tipe, $month, $year) {
-                    $query->where('tipe', $tipe)
-                        ->whereMonth('tgl_nilai', $month)
-                        ->whereYear('tgl_nilai', $year);
-                })
-                ->where('id_karyawan', $idKaryawan)
+                ->where('id', $id)
                 ->firstOrFail();
 
             return response()->json(
@@ -112,14 +122,33 @@ class HistoryPenilaianController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function show($idKaryawan, $tipe, $month, $year)
     {
-        //
-    }
+        try {
 
-    public function destroy($id)
-    {
-        //
+            $penilaian = PenilaianKaryawan::with([
+                'tipePenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
+                'analisisSwot', // analisis swot relationship
+            ])
+                ->where([
+                    'id_karyawan' => $idKaryawan,
+                    'tipe' => $tipe,
+                ])
+                ->orderByDesc('id')
+                ->firstOrFail();
+
+            return response()->json(
+                new PenilaianKaryawanResource($penilaian),
+                Response::HTTP_OK
+            );
+        } catch (\Throwable $th) {
+            return response()->json(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     public function printUmum($idPenilaian)
@@ -132,7 +161,6 @@ class HistoryPenilaianController extends Controller
                 'analisisSwot', // analisis swot relationship
             ])
                 ->where('id', $idPenilaian)
-                ->where('tipe', 'pk_umum')
                 ->firstOrFail();
 
             return view('history.nilai_umum', compact('nilai'));
