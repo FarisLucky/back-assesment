@@ -29,6 +29,8 @@ class StorePenilaianKaryawanRequest extends FormRequest
             'id_karyawan' => ['required', 'exists:m_karyawan,id'],
             'penilaians' => ['required'],
             'tipe' => ['required', Rule::in(MPenilaian::TIPE)],
+            'bulan_nilai' => ['required'],
+            'tahun_nilai' => ['required'],
         ];
     }
 }

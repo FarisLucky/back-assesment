@@ -47,4 +47,18 @@ class PenilaianKaryawanServices
             'updated_by' => $params['updated_by']
         ];
     }
+
+    public function hitungMedis($params)
+    {
+        $bobot = $params['bobot'] / 100; // percentage
+        $ttlTipe = $params['ttlTipe'];
+        $defaultCVal = 25;
+        $cVal = ($ttlTipe / $defaultCVal) * $bobot;
+        $dVal = $cVal * 100;
+
+        return [
+            'cVal' => $cVal,
+            'dVal' => $dVal,
+        ];
+    }
 }

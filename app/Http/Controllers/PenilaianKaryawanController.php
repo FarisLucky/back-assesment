@@ -59,6 +59,9 @@ class PenilaianKaryawanController extends Controller
                     ->whereYear('tgl_nilai', $year);
             },
         ])
+            ->whereHas('jabatan', function ($query) {
+                $query->where('kategori', auth()->user()->karyawan->jabatan->kategori);
+            })
             ->where('id', '<>', $karyawan->id_karyawan);
 
         $relations = Arr::get(config('relationship'), MKaryawan::class);
@@ -106,8 +109,10 @@ class PenilaianKaryawanController extends Controller
         DB::statement("SET SQL_MODE=''"); //this is the trick use it just before your query (untuk menghilangkah only_full_group_by)
         $penilaians = PenilaianKaryawan::with('karyawan')
             ->select('id', 'id_karyawan', 'jabatan', 'tipe', 'tgl_nilai', 'status')
-            ->whereMonth('tgl_nilai', $month)
-            ->whereYear('tgl_nilai', $year)
+            ->where(function ($query) use ($year, $month) {
+                $query->whereMonth('tgl_nilai', $month)
+                    ->whereYear('tgl_nilai', $year);
+            })
             ->where('id_karyawan', '<>', $karyawan->id_karyawan);
 
         $relations = Arr::get(config('relationship'), MKaryawan::class);
@@ -179,23 +184,28 @@ class PenilaianKaryawanController extends Controller
 
         $tipeParams = $tipe;
 
+        if ($tipe == MPenilaian::TIPE[1]) {
+        }
+
         $mPenilaian->transform(function ($tipe) use ($idJabatanPenilai, $parent, $getTipePenilaian, $tipeParams) {
 
             if ($tipeParams == MPenilaian::TIPE[0]) {
                 $tipe->check = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
                     ->where('id_tipe', $tipe->id)
                     ->count();
+                $idTipeKepalaStaff = 7; // ambil dari database
 
-                if ($parent->jabatan->id_parent != $idJabatanPenilai) {
+                if (
+                    $tipe->id == $idTipeKepalaStaff // dan apabila id tipe bukan penilaian id penilaian kepala staff
+                    && $parent->jabatan->id_parent != $idJabatanPenilai // jika yang menilai bukan kepala staff nya
+                ) { // tipe kepala staff
                     $tipe->check = 0;
                 }
+            } else if ($tipeParams == MPenilaian::TIPE[1] && $parent->jabatan->id_parent == $idJabatanPenilai) {
 
-                // $parent = $parent->jabatan->id_parent == $idJabatanPenilai ? 1 : 0;
-
-                // $tipe->check = $parent == $tipe->check ? 1 : 0;
+                $tipe->check = 1;
             } else {
-
-                $tipe->check = true;
+                $tipe->check = 0;
             }
 
             $tipe->penilaian = $tipe->penilaian->map(function ($nilai) {
@@ -206,8 +216,6 @@ class PenilaianKaryawanController extends Controller
 
             return $tipe;
         });
-
-
 
         return MTipeResource::collection($mPenilaian);
     }
@@ -255,6 +263,8 @@ class PenilaianKaryawanController extends Controller
                 'updated_by' => 3
             ];
 
+            $kategori = $userPenilai->karyawan->jabatan->kategori;
+
             $penilaianData =  [ // setup data penilaian
                 'id_karyawan' => $karyawan->id,
                 'nama_karyawan' => $karyawan->nama,
@@ -268,6 +278,7 @@ class PenilaianKaryawanController extends Controller
                 'tipe' => $input['tipe'],
                 'status' => PenilaianKaryawan::STATUS[1],
                 'validasi_by' => null,
+                'kategori' => $kategori,
                 'created_by' => $karyawan->id,
                 'updated_by' => $karyawan->id,
             ];
@@ -286,13 +297,14 @@ class PenilaianKaryawanController extends Controller
                     'nama_tipe' => $tipePenilaian['nama'],
                     'tipe_pk' => $tipePenilaian['tipe'],
                     'catatan' => optional($tipePenilaian)['catatan'],
-                    'id_karyawan' => $penilai->id,
+                    'id_karyawan' => $tipePenilaian['check'] > 0 ? $penilai->id : null,
                     'nama_penilai' => $tipePenilaian['check'] > 0 ? $penilai->nama : null,
                 ];
 
                 $storeTipePenilaian = TipePenilaian::create($tipePenilaianData);
 
                 foreach ($tipePenilaian['relationship']['m_penilaian'] as $detail) {
+                    $rataNilai = 0;
 
                     $params['detail_ttl'] = 0; // init ttl detail penilaian
                     $jumlahIndikator = 0; // init jumlah indikator per detail penilaian
@@ -323,6 +335,19 @@ class PenilaianKaryawanController extends Controller
                         $rataNilai = $params['detail_ttl'] / $jumlahIndikator;
                     } else {
                         $rataNilai = 0;
+                    }
+
+                    if (
+                        $kategori == MJabatan::MEDIS
+                        && $input['tipe'] == MPenilaian::TIPE[1] // jika tipe penilaian khusus
+                    ) { // jika penilaian medis dan khusus
+                        $ttlMedis = $penilaianServices->hitungMedis([
+                            'bobot' => $detail['bobot'],
+                            'ttlTipe' => $params['detail_ttl'],
+                        ]);
+
+                        $rataNilai = $ttlMedis['cVal'];
+                        $params['detail_ttl'] = $ttlMedis['dVal'];
                     }
 
                     $detailData = [
@@ -411,19 +436,19 @@ class PenilaianKaryawanController extends Controller
 
             $tipeParams = $penilaian->tipe;
 
-            $penilaian->tipePenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian, $tipeParams) {
-                if ($tipeParams == MPenilaian::TIPE[0]) {
-                    $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
-                        ->where('id_tipe', $tipe->id_tipe)
-                        ->count();
-                    // $parent = $tipe->karyawan->jabatan->where('id_parent', $idJabatanPenilai)->count();
-                    // $tipe->check = $tipe->check + optional($parent)->count();
-                } else {
-                    $tipe->check_penilai = true;
-                }
+            // $penilaian->tipePenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian, $tipeParams) {
+            //     if ($tipeParams == MPenilaian::TIPE[0]) {
+            //         $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
+            //             ->where('id_tipe', $tipe->id_tipe)
+            //             ->count();
+            //         // $parent = $tipe->karyawan->jabatan->where('id_parent', $idJabatanPenilai)->count();
+            //         // $tipe->check = $tipe->check + optional($parent)->count();
+            //     } else {
+            //         $tipe->check_penilai = true;
+            //     }
 
-                return $tipe;
-            });
+            //     return $tipe;
+            // });
 
             return response()->json(
                 new PenilaianKaryawanResource($penilaian),

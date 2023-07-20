@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\MJabatan;
 use App\Models\MPenilaian;
 use App\Models\MSubPenilaian;
 use Illuminate\Database\Seeder;
@@ -15,8 +16,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $penilaian = MPenilaian::whereNotNull('deleted_at');
-        $penilaian->forceDelete();
+        // $penilaian = MPenilaian::whereNotNull('deleted_at');
+        // $penilaian->forceDelete();
         // $penilaian->each(function ($nilai) {
         //     $nilai->sub()->delete();
         //     $nilai->save();
@@ -34,5 +35,7 @@ class DatabaseSeeder extends Seeder
         //     // KaryawanSeeder::class,
         //     // PenilaianSeeder::class,
         // ]);
+
+        // MJabatan::query()->update(['kategori' => 1]);
     }
 }
