@@ -7,9 +7,7 @@ use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\MJabatan;
 use App\Models\MKaryawan;
-use App\Models\MTipePenilaian;
 use App\Models\PenilaianKaryawan;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -164,6 +162,33 @@ class HistoryPenilaianController extends Controller
                 ->firstOrFail();
 
             return view('history.nilai_umum', compact('nilai'));
+        } catch (\Throwable $th) {
+
+            return dd($th->getMessage());
+
+            // abort(404, 'MAAF TIDAK ADA DATA');
+        }
+    }
+
+    public function printKhusus($idPenilaian)
+    {
+        try {
+            $nilai = PenilaianKaryawan::with([
+                'karyawan', // tipe penilaian relationship
+                'tipePenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian', // tipe penilaian relationship
+                'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
+                'analisisSwot', // analisis swot relationship
+            ])
+                ->where('id', $idPenilaian)
+                ->firstOrFail();
+            if ($nilai->kategori == MJabatan::NON_MEDIS) {
+                $viewName = 'history.nilai_khusus_nonmedis';
+            } else {
+                $viewName = 'history.nilai_khusus_medis';
+            }
+
+            return view($viewName, compact('nilai'));
         } catch (\Throwable $th) {
 
             return dd($th->getMessage());

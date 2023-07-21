@@ -61,12 +61,12 @@
                                     </li>
                                 @endforeach
                                 <li>
-                                    <span style="width: 92.5%">Jumlah</span>
-                                    <b style="font-weight: 900">{{ $detail->ttl_nilai }}</b>
+                                    <span style="width: 92%">Jumlah</span>
+                                    <b>{{ $detail->ttl_nilai }}</b>
                                 </li>
                                 <li>
-                                    <span style="width: 92.5%">Rata rata</span>
-                                    <b style="font-weight: 900">{{ $detail->rata_nilai }}</b>
+                                    <span style="width: 92%">Rata rata</span>
+                                    <b>{{ $detail->rata_nilai }}</b>
                                 </li>
                             </ul>
                         </td>
@@ -125,7 +125,7 @@
         </tbody>
     </table>
     <div class="ttd">
-        <p>Kraksaan, {{ $nilai->tgl_nilai->isoFormat('LL') }}</p>
+        <p>Kraksaan, 31 Maret 2023</p>
         <p>Yang Melaksanakan Penilaian</p>
         <p>
             <strong>Choky Candra</strong>

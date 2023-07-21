@@ -134,3 +134,14 @@ table {
     border-collapse: collapse;
     border-spacing: 0;
 }
+
+.ttd {
+    font-weight: 800;
+}
+.data-karyawan {
+    margin-top: 1.8rem;
+}
+.data-karyawan li strong {
+    font-weight: 800;
+    text-transform: uppercase;
+}

@@ -28,10 +28,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('karyawans/all/data', [MKaryawanController::class, 'data'])
         ->name('karyawans.data');
@@ -125,11 +121,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('m-validasi-penilai', MValidasiPenilaiController::class)
         ->names('m-validasi-penilai');
+
+    /**
+     * Authentication route on Login
+     *
+     **/
+
+    Route::post('logout', [LoginController::class, 'logout'])->name('auth.logout');
 });
+
 /**
  * Authentication route
  *
  **/
+
 Route::post('login', [LoginController::class, 'login'])->name('auth.login');
 
 // Route::get('penilaian-karyawans/{id_penilaian}/progress', [PenilaianKaryawanController::class, 'showProgress'])

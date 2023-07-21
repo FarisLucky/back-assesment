@@ -27,6 +27,7 @@ class PenilaianKaryawanResource extends JsonResource
             'rata_nilai' => $this->rata_nilai,
             'tipe' => $this->tipe,
             'status' => $this->status,
+            'kategori' => $this->kategori,
             'validasi_by' => $this->validasi_by,
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,

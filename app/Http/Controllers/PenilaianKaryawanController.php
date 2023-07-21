@@ -59,8 +59,12 @@ class PenilaianKaryawanController extends Controller
                     ->whereYear('tgl_nilai', $year);
             },
         ])
-            ->whereHas('jabatan', function ($query) {
-                $query->where('kategori', auth()->user()->karyawan->jabatan->kategori);
+            ->whereHas('jabatan', function ($query) use ($karyawan) {
+                $jabatan = $karyawan->karyawan->jabatan;
+                if ($jabatan->level == 4) { // kepala staff
+                    $query->where('id_parent', $jabatan->id);
+                }
+                $query->where('kategori', $jabatan->kategori);
             })
             ->where('id', '<>', $karyawan->id_karyawan);
 

@@ -24,6 +24,8 @@ Route::get('/', function () {
 
 Route::get('/pdf-view/{idPenilaian}', [HistoryPenilaianController::class, 'printUmum'])
     ->name('print.nilai');
+Route::get('/pdf-khusus/{idPenilaian}', [HistoryPenilaianController::class, 'printKhusus'])
+    ->name('print.nilai_khusus');
 Route::get('/excel-view/{idPenilaian}', [HistoryPenilaianController::class, 'excelUmum'])
     ->name('excel.nilai');
 

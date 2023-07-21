@@ -50,10 +50,11 @@ class LoginController extends Controller
         }
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
         try {
-            request()->user()->currentAccessToken()->delete();
+            $user = $request->user();
+            $user->currentAccessToken()->delete();
 
             return response()->json('', Response::HTTP_NO_CONTENT);
         } catch (\Throwable $th) {
