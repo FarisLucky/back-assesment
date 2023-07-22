@@ -30,7 +30,7 @@ class LoginController extends Controller
                     $query->select('id', 'nama', 'level', 'kategori');
                 }
             ])
-                ->select('id', 'id_karyawan', 'name', 'email', 'password')
+                ->select('id', 'id_karyawan', 'name', 'email', 'password', 'role')
                 ->where('email', $request->email)
                 ->firstOrFail();
 

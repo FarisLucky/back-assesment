@@ -15,6 +15,7 @@ class AlterMPenilaianTable extends Migration
     {
         Schema::table('m_penilaian', function (Blueprint $table) {
             $table->string('bobot', 3)->nullable();
+            $table->unsignedBigInteger('created_by')->nullable();
         });
 
         Schema::table('m_sub_penilaian', function (Blueprint $table) {

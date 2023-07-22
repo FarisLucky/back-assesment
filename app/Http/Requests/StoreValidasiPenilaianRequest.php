@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreMSubPenilaianRequest extends FormRequest
+class StoreValidasiPenilaianRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,9 +24,8 @@ class StoreMSubPenilaianRequest extends FormRequest
     public function rules()
     {
         return [
-            'nama' => ['required'],
-            'id_penilaian' => ['required', 'exists:m_penilaian,id'],
-            'id_jabatan_penilai' => ['required'],
+            'sub_penilaians' => ['required'],
+            'id_penilaian' => ['required'],
         ];
     }
 }

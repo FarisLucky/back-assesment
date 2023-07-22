@@ -6,7 +6,10 @@ use App\Models\MSubPenilaian;
 use App\Http\Requests\StoreMSubPenilaianRequest;
 use App\Http\Requests\UpdateMSubPenilaianRequest;
 use App\Http\Resources\Api\MSubPenilaianResource;
+use App\Models\MJabatan;
 use App\Models\MPenilaian;
+use App\Models\MValidPenilai;
+use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -100,6 +103,7 @@ class MSubPenilaianController extends Controller
                     ->orWhereNull('id_jabatan_penilai');
             })
             ->where('kategori', auth()->user()->karyawan->jabatan->kategori)
+            ->orderBy('id')
             ->get();
 
         return MSubPenilaianResource::collection($units);
@@ -109,34 +113,54 @@ class MSubPenilaianController extends Controller
     {
         $data = $request->validated();
 
-        $formData = [];
-
-        foreach ($data['nama'] as $nama) {
-            if (!is_null($nama['nama']) || $nama['nama'] != '') {
-                array_push($formData, [
-                    'nama' => strtoupper($nama['nama']),
-                    'id_penilaian' => $data['id_penilaian'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'kategori' => $data['kategori'],
-                ]);
-            }
-        }
-
         try {
             DB::beginTransaction();
 
-            MSubPenilaian::insert($formData);
+            $jabatan = MJabatan::find($request->id_jabatan_penilai);
+
+            $sub = MSubPenilaian::where('nama', $request->nama)->first();
+
+            if (is_null($sub)) {
+                $subData = [
+                    'nama' => strtoupper($data['nama']),
+                    'id_penilaian' => $data['id_penilaian'],
+                    'kategori' => $jabatan->kategori,
+                    'created_by' => $request->user()->id,
+                ];
+
+                $sub = MSubPenilaian::create($subData);
+            }
+
+            $getValidPenilai = MValidPenilai::where([
+                'id_sub' => $sub->id,
+                'id_jabatan_penilai' => $jabatan->id,
+            ])->first();
+
+            if (!is_null($getValidPenilai)) {
+
+                DB::commit();
+                throw new Exception('Penilaian Sudah Ada');
+            }
+
+            MValidPenilai::create([
+                'id_sub' => $sub->id,
+                'id_jabatan_penilai' => $jabatan->id,
+            ]);
 
             DB::commit();
+
+            return response()->json(
+                'Berhasil ditambahkan !',
+                Response::HTTP_OK
+            );
         } catch (\Throwable $th) {
             DB::rollBack();
-        }
 
-        return response()->json(
-            'Berhasil ditambahkan !',
-            Response::HTTP_OK
-        );
+            return response()->json(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     public function show($id)

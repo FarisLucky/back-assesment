@@ -18,11 +18,8 @@ class MSubPenilaian extends Model
     protected $fillable = [
         'id_penilaian',
         'nama',
-        'id_jabatan_penilai',
-        'id_jabatan_kinerja',
-        'id_unit_penilai',
-        'id_parent',
-        'kategori'
+        'kategori',
+        'created_by'
     ];
 
     public $casts = [

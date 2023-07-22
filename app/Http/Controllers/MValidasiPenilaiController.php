@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SearchingTrait;
+use App\Http\Requests\StoreValidasiPenilaianRequest;
 use App\Http\Resources\Api\MValidPenilaiResource;
+use App\Models\MSubPenilaian;
 use App\Models\MValidPenilai;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class MValidasiPenilaiController extends Controller
 {
@@ -66,34 +69,45 @@ class MValidasiPenilaiController extends Controller
         );
     }
 
-    public function store(Request $request)
+    public function store(StoreValidasiPenilaianRequest $request)
     {
         try {
-            $data = [
-                'id_jabatan_penilai' => $request->user()->karyawan->id_jabatan,
+            DB::beginTransaction();
+            $karyawan = $request->user()->karyawan;
+            $subNama = $request->sub_penilaians['nama'];
+            $subPenilaian = MSubPenilaian::where('id', $request->sub_penilaians['id'])
+                ->orWhere('nama', $subNama)
+                ->first();
+
+            if (is_null($subPenilaian)) {
+                $subData = [
+                    'id_penilaian' => $request->id_penilaian,
+                    'nama' => $subNama,
+                    'kategori' => $karyawan->jabatan->kategori,
+                    'created_by' => $request->user()->id,
+                ];
+
+                $subPenilaian = MSubPenilaian::create($subData);
+            }
+
+            $validasiData = [
+                'id_sub' => $subPenilaian->id,
+                'id_jabatan_penilai' => $karyawan->id_jabatan,
             ];
 
-            foreach ($request->sub_penilaians as $sub) {
-                $check = MValidPenilai::where(
-                    [
-                        'id_sub' => $sub['id'],
-                        'id_jabatan_penilai' => $data['id_jabatan_penilai'],
-                    ]
-                );
+            $check = MValidPenilai::where($validasiData);
 
-                if ($check->count() > 0) {
-                    throw new Exception('Sub ' . $sub['nama'] . ' sudah ada');
-                    continue;
-                }
-
-                MValidPenilai::create([
-                    'id_sub' => $sub['id'],
-                    'id_jabatan_penilai' => $data['id_jabatan_penilai'],
-                ]);
+            if ($check->count() > 0) {
+                throw new Exception('Sub ' . $subNama . ' sudah ada');
             }
+
+            MValidPenilai::create($validasiData);
+
+            DB::commit();
 
             return response()->json('Tindakan Berhasil !', Response::HTTP_CREATED);
         } catch (\Throwable $th) {
+            DB::rollBack();
 
             return response()->json([
                 'message' => $th->getMessage()

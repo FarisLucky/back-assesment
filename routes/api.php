@@ -59,6 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('penilaians/all/data', [MPenilaianController::class, 'data'])
         ->name('mPenilaians.data');
+    Route::get('penilaians/{tipe}/search', [MPenilaianController::class, 'getByTipe'])
+        ->name('mPenilaians.getByTipe');
     Route::apiResource('penilaians', MPenilaianController::class)
         ->names('mPenilaians');
 

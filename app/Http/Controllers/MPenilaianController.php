@@ -60,8 +60,20 @@ class MPenilaianController extends Controller
     public function data()
     {
         $penilaian = MPenilaian::all([
-            'id', 'nama', 'tipe', 'level'
+            'id', 'nama', 'tipe'
         ]);
+
+        return response()->json(
+            MPenilaianResource::collection($penilaian),
+            Response::HTTP_OK
+        );
+    }
+
+    public function getByTipe($tipe)
+    {
+        $penilaian = MPenilaian::where('tipe', $tipe)
+            ->select('id', 'nama', 'tipe')
+            ->get();
 
         return response()->json(
             MPenilaianResource::collection($penilaian),
