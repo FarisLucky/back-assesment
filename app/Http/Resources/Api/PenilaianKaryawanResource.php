@@ -23,8 +23,8 @@ class PenilaianKaryawanResource extends JsonResource
             'nama_penilai' => $this->nama_penilai,
             'jabatan_penilai' => $this->jabatan_penilai,
             'tgl_nilai' => $this->tgl_nilai->isoFormat('L'),
-            'ttl_nilai' => $this->ttl_nilai,
-            'rata_nilai' => $this->rata_nilai,
+            'ttl_nilai' => $this->ttl_nilai_desc,
+            'rata_nilai' => $this->rata_nilai_desc,
             'tipe' => $this->tipe,
             'status' => $this->status,
             'kategori' => $this->kategori,
@@ -37,6 +37,7 @@ class PenilaianKaryawanResource extends JsonResource
                 'tipe_penilaian' => TipePenilaianResource::collection($this->whenLoaded('tipePenilaian')),
                 'analisis_swot' => new AnalisisSwotResource($this->whenLoaded('analisisSwot')),
                 'karyawan' => new MKaryawanResource($this->whenLoaded('karyawan')),
+                'comment' => new CommentResource($this->whenLoaded('comment')),
             ]
         ];
     }

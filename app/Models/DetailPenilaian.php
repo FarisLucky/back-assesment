@@ -21,6 +21,7 @@ class DetailPenilaian extends Model
         'nama_penilai',
         'jabatan_penilai',
         'catatan',
+        'bobot',
         'updated_by',
     ];
 
@@ -28,6 +29,11 @@ class DetailPenilaian extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function getRataNilaiDescAttribute()
+    {
+        return number_format($this->rata_nilai, 1);
+    }
 
     public function penilaian()
     {

@@ -39,6 +39,14 @@ class AlterMPenilaianTable extends Migration
             $table->unsignedBigInteger('id_jabatan_penilai');
             $table->timestamps();
         });
+
+        Schema::create('comment', function (Blueprint $table) {
+            $table->id();
+            $table->string('catatan');
+            $table->string('penilai');
+            $table->string('tanggapan');
+            $table->timestamps();
+        });
     }
 
     /**

@@ -54,6 +54,15 @@ class PenilaianKaryawan extends Model
         return $query->whereYear('created_at', $year);
     }
 
+    public function getRataNilaiDescAttribute()
+    {
+        return number_format($this->rata_nilai, 1);
+    }
+    public function getTtlNilaiDescAttribute()
+    {
+        return number_format($this->ttl_nilai, 1);
+    }
+
     public function detail()
     {
         return $this->hasMany(DetailPenilaian::class, 'id_pk');
@@ -72,5 +81,10 @@ class PenilaianKaryawan extends Model
     public function analisisSwot()
     {
         return $this->hasOne(AnalisisSwot::class, 'id_pk');
+    }
+
+    public function comment()
+    {
+        return $this->hasOne(Comment::class, 'id_pk');
     }
 }

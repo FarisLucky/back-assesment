@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HistoryPenilaianController;
+use App\Http\Controllers\JabatanController;
 use App\Models\MJabatan;
 use App\Models\PersonalAccessToken;
 use Illuminate\Http\Request;
@@ -27,6 +28,8 @@ Route::get('/pdf-view/{idPenilaian}', [HistoryPenilaianController::class, 'print
 Route::get('/pdf-khusus/{idPenilaian}', [HistoryPenilaianController::class, 'printKhusus'])
     ->name('print.nilai_khusus');
 Route::get('/excel-view/{idPenilaian}', [HistoryPenilaianController::class, 'excelUmum'])
+    ->name('excel.nilai');
+Route::get('/jabatan/cetak', [JabatanController::class, 'pdf'])
     ->name('excel.nilai');
 
 Route::get('/tokens/create', function (Request $request) {

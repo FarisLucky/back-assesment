@@ -153,6 +153,13 @@ class JabatanController extends Controller
         );
     }
 
+    public function pdf()
+    {
+        $jabatans = MJabatan::all();
+
+        return view('jabatan.pdf', compact('jabatans'));
+    }
+
     public function destroy($id)
     {
         $jabatan = MJabatan::findOrFail($id);

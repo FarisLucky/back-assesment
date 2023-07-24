@@ -16,7 +16,7 @@
         <tr class="text-center">
             <td style="width: 100%" colspan="3">
                 <p class="title">
-                    EVALUASI DAN PENILAIAN KINERJA KARYAWAN
+                    EVALUASI DAN PENILAIAN KINERJA KARYAWAN MEDIS
                 </p>
             </td>
         </tr>
@@ -37,101 +37,155 @@
     <table class="bordered">
         <tr>
             <td style="width: 3%">No</td>
-            <td style="width: 30%">Unsur</td>
-            <td>Sub Unsur - Nilai</td>
+            <td>KOMPONEN PENILAIAN KINERJA</td>
+            <td style="width: 8%">Bobot</td>
+            <td style="width: 10%">Penilaian</td>
+            <td style="width: 15%">NILAI</td>
+            <td style="width: 15%">TOTAL NILAI</td>
+        </tr>
+        <tr>
+            <td colspan="2">BOBOT KINERJA</td>
+            <td>A</td>
+            <td>B</td>
+            <td>C = (JML B/25) * A</td>
+            <td>D = C * 100</td>
         </tr>
         <tbody>
+            @php
+                $ttlNilai = 0;
+            @endphp
             @foreach ($nilai->tipePenilaian as $tipe)
-                <tr>
-                    <td colspan="3">
-                        <strong>{{ $tipe->nama_tipe }}</strong>
-                    </td>
-                </tr>
                 @foreach ($tipe->detailPenilaian as $detail)
                     <tr>
-                        <td>1</td>
-                        <td>{{ $detail->nama_penilaian }}</td>
-                        <td>
-                            <ul class="sub-nilai">
-                                @foreach ($detail->subPenilaian as $sub)
-                                    <li>
-                                        <span style="width: 2%">{{ $loop->iteration }}</span>
-                                        <span style="width: 90%">{{ $sub->sub_penilaian }}</span>
-                                        <span>{{ $sub->nilai }}</span>
-                                    </li>
-                                @endforeach
-                                <li>
-                                    <span style="width: 92%">Jumlah</span>
-                                    <b>{{ $detail->ttl_nilai }}</b>
-                                </li>
-                                <li>
-                                    <span style="width: 92%">Rata rata</span>
-                                    <b>{{ $detail->rata_nilai }}</b>
-                                </li>
-                            </ul>
+                        <td colspan="2" style="background: yellow">{{ $loop->iteration }}. {{ $detail->nama_penilaian }}
+                        </td>
+                        <td style="background: yellow">{{ $detail->bobot }} %</td>
+                        <td style="background: yellow">1 2 3 4 5</td>
+                        <td style="background: yellow">
+                            <strong>{{ $detail->rata_nilai }}</strong>
+                        </td>
+                        <td style="background: yellow">
+                            <strong>{{ $detail->ttl_nilai }}</strong>
                         </td>
                     </tr>
+                    @php
+                        $ttl = 0;
+                    @endphp
+                    @foreach ($detail->subPenilaian as $sub)
+                        <tr>
+                            <td colspan="2">
+                                <span style="width: 90%">{{ $sub->sub_penilaian }}</span>
+                            </td>
+                            <td>-</td>
+                            <td>{{ $sub->nilai }}</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                        @php
+                            $ttl += $sub->nilai;
+                        @endphp
+                    @endforeach
+                    <tr>
+                        <td colspan="2" style="text-align: center">JUMLAH</td>
+                        <td></td>
+                        <td>{{ $ttl }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    @php
+                        $ttlNilai += $ttl;
+                    @endphp
                 @endforeach
-                <tr>
-                    <td colspan="2" style="padding: .5rem;">
-                        <p style="margin-bottom: .5rem; border-bottom: 1px solid black">Catatan:</p>
-                        <p>{{ $tipe->catatan }}</p>
-                    </td>
-                    <td class="text-end">
-                        <p>Yang Memberi Penilaian: </p>
-                        <p style="margin-top: 2rem">{{ $tipe->nama_penilai ?? '-' }}</p>
-                    </td>
-                </tr>
             @endforeach
             <tr>
-                <td colspan="2">Kecakapan bidang tugas</td>
-                <td style="text-align: end">
-                    <p>Yang memberi penilaian</p>
-                    <p style="margin-top: 4rem">Nama Pemberi</p>
+                <td colspan="5" style="text-align: center">JUMLAH NILAI</td>
+                <td>{{ $ttlNilai }}</td>
+            </tr>
+            <tr>
+                <td colspan="5"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <P>KETERANGAN</P>
+                    <ul>
+                        <li>Sangat Baik/Istimewa : >95</li>
+                        <li>Baik : 86 s/d 95</li>
+                        <li>Cukup : 66 s/d 85</li>
+                        <li>Kurang : 51 s/d 65</li>
+                        <li>Sangat Kurang : `<50` </li>
+                    </ul>
                 </td>
+                <td colspan="3">CATATAN</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="border-right: none">
+                    <P style="margin-bottom: .5rem">Tanggapan dari pegawai yang dinilai</P>
+                    <P>Tanggal: 31 Desember 2022</P>
+                </td>
+                <td colspan="3" style="border-left: none">: Test</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="border-right: none">
+                    <P style="margin-bottom: .5rem">Tanggapan Kepala Seksi atas Tanggapan</P>
+                    <P>Tanggal: 31 Desember 2022</P>
+                </td>
+                <td colspan="3" style="border-left: none">: Test</td>
             </tr>
         </tbody>
     </table>
-
-    <table class="bordered" style="margin-top: 1rem">
-        <thead>
-            <th colspan="2">
-                <strong>Analisis Swot</strong>
-            </th>
-        </thead>
-        <tbody>
-            <tr>
-                <td style="width: 50%">
-                    <strong class="swot">Kelebihan</strong>
+    <table>
+        <tr style="text-align: center">
+            <td>
+                <div class="ttd">
+                    <p>Kraksaan, 31 Maret 2023</p>
+                    <p>Yang Melaksanakan Penilaian</p>
                     <p>
-                        {{ $nilai->analisisSwot->kelebihan ?? '-' }}
+                        <strong>Choky Candra</strong>
                     </p>
-                <td>
-                    <strong class="swot">Kekurangan</strong>
                     <p>
-                        {{ $nilai->analisisSwot->kekurangan ?? '-' }}
+                        <strong>NIP. 1643452039</strong>
                     </p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <strong class="swot">Oportunity/ Kesempatan</strong>
-                    <p>{{ $nilai->analisisSwot->kesempatan ?? '-' }}</p>
-                <td>
-                    <strong class="swot">Threat/ Ancaman</strong>
-                    <p>{{ $nilai->analisisSwot->ancaman ?? '-' }}</p>
-                </td>
-            </tr>
-        </tbody>
+                </div>
+            </td>
+            <td>
+                <div class="ttd">
+                    <p>Kraksaan, 31 Maret 2023</p>
+                    <p>Yang Melaksanakan Penilaian</p>
+                    <p>
+                        <strong>Choky Candra</strong>
+                    </p>
+                    <p>
+                        <strong>NIP. 1643452039</strong>
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div class="ttd">
+                    <p>Kraksaan, 31 Maret 2023</p>
+                    <p>Yang Melaksanakan Penilaian</p>
+                    <p>
+                        <strong>Choky Candra</strong>
+                    </p>
+                    <p>
+                        <strong>NIP. 1643452039</strong>
+                    </p>
+                </div>
+            </td>
+        </tr>
+        <tr style="text-align: center">
+            <td colspan="3">
+                <div class="ttd" style="width: auto">
+                    <p>Kraksaan, 31 Maret 2023</p>
+                    <p>Yang Melaksanakan Penilaian</p>
+                    <p>
+                        <strong>Choky Candra</strong>
+                    </p>
+                    <p>
+                        <strong>NIP. 1643452039</strong>
+                    </p>
+                </div>
+            </td>
+        </tr>
     </table>
-    <div class="ttd">
-        <p>Kraksaan, 31 Maret 2023</p>
-        <p>Yang Melaksanakan Penilaian</p>
-        <p>
-            <strong>Choky Candra</strong>
-        </p>
-        <p>
-            <strong>NIP. 1643452039</strong>
-        </p>
-    </div>
 @endsection

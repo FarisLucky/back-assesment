@@ -19,6 +19,7 @@ class TipePenilaianResource extends JsonResource
             'id_pk' => $this->id_pk,
             'id_detail' => $this->id_detail,
             'nama_tipe' => $this->nama_tipe,
+            'check_penilai' => $this->check_penilai,
             'tipe_pk' => $this->tipe_pk,
             'id_karyawan' => $this->id_karyawan,
             'nama_penilai' => $this->nama_penilai,

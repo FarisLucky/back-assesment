@@ -57,26 +57,24 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td colspan="2">
-                            <h5 style="border-bottom: 1px solid black; padding-bottom: .4rem">{{ $detail->nama_penilaian }}
+                            <h5 style="padding-bottom: .4rem">{{ $detail->nama_penilaian }}
                             </h5>
-                            <ul class="sub-nilai">
-                                @foreach ($detail->subPenilaian as $sub)
-                                    <li style="vertical-align: top">
-                                        <span style="width: 2%; vertical-align: top">{{ $loop->iteration }}</span>
-                                        <span style="width: 88.8%">{{ $sub->sub_penilaian }}</span>
-                                        <span style="display: inline-block; text-align: end">{{ $sub->nilai }}</span>
-                                    </li>
-                                @endforeach
-                                <li>
-                                    <span style="width: 91%">Jumlah</span>
-                                    <b style="font-weight: 900">{{ $detail->ttl_nilai }}</b>
-                                </li>
-                                <li>
-                                    <span style="width: 91%">Rata rata</span>
-                                    <b style="font-weight: 900">{{ $detail->rata_nilai }}</b>
-                                </li>
-                            </ul>
                         </td>
+                    </tr>
+                    @foreach ($detail->subPenilaian as $sub)
+                        <tr>
+                            <td style="border: none"></td>
+                            <td>{{ $sub->sub_penilaian }}</td>
+                            <td>{{ $sub->nilai }}</td>
+                        </tr>
+                    @endforeach
+                    <tr>
+                        <td colspan="2" style="text-align: center">TOTAL NILAI</td>
+                        <td>{{ $detail->ttl_nilai }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center">RATA NILAI</td>
+                        <td>{{ $detail->rata_nilai }}</td>
                     </tr>
                 @endforeach
             @endforeach
@@ -95,8 +93,35 @@
                 </td>
                 <td>
                     <p style="margin-top: .3rem; font-weight: 800; font-size: 15px; color: red">
-                        {{ $nilai->rata_nilai }}</p>
+                        {{ number_format($nilai->rata_nilai, 1, '.', ',') }}</p>
                 </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <P>KETERANGAN</P>
+                    <ul>
+                        <li>Sangat Baik/Istimewa : >95</li>
+                        <li>Baik : 86 s/d 95</li>
+                        <li>Cukup : 66 s/d 85</li>
+                        <li>Kurang : 51 s/d 65</li>
+                        <li>Sangat Kurang : `<50` </li>
+                    </ul>
+                </td>
+                <td>CATATAN</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="border-right: none">
+                    <P style="margin-bottom: .5rem">Tanggapan dari pegawai yang dinilai</P>
+                    <P>Tanggal: 31 Desember 2022</P>
+                </td>
+                <td>: Test</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="border-right: none">
+                    <P style="margin-bottom: .5rem">Tanggapan Kepala Seksi atas Tanggapan</P>
+                    <P>Tanggal: 31 Desember 2022</P>
+                </td>
+                <td>: Test</td>
             </tr>
         </tbody>
     </table>

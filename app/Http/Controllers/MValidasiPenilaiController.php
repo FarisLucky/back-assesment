@@ -114,4 +114,14 @@ class MValidasiPenilaiController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function destroy($id)
+    {
+        $validPenilai = MValidPenilai::findOrFail($id);
+        $validPenilai->delete();
+
+        return response()->json([
+            'data' => ''
+        ], Response::HTTP_NO_CONTENT);
+    }
 }

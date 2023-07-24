@@ -9,6 +9,7 @@ class MValidPenilaiResource extends JsonResource
     public function toArray($request)
     {
         return [
+            'id' => $this->id,
             'id_sub' => $this->id_sub,
             'id_jabatan_penilai' => $this->id_jabatan_penilai,
             'relationship' => [

@@ -11,6 +11,7 @@ use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\MTipeResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\AnalisisSwot;
+use App\Models\Comment;
 use App\Models\DetailPenilaian;
 use App\Models\MJabatan;
 use App\Models\MKaryawan;
@@ -18,7 +19,6 @@ use App\Models\MTipe;
 use App\Models\MTipePenilaian;
 use App\Models\SubPenilaianKaryawan;
 use App\Models\TipePenilaian;
-use App\Models\User;
 use App\Services\PenilaianKaryawanServices;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -61,9 +61,9 @@ class PenilaianKaryawanController extends Controller
         ])
             ->whereHas('jabatan', function ($query) use ($karyawan) {
                 $jabatan = $karyawan->karyawan->jabatan;
-                if ($jabatan->level == 4) { // kepala staff
-                    $query->where('id_parent', $jabatan->id);
-                }
+                // if ($jabatan->level == 4) { // kepala staff
+                $query->where('id_parent', $jabatan->id);
+                // }
                 $query->where('kategori', $jabatan->kategori);
             })
             ->where('id', '<>', $karyawan->id_karyawan);
@@ -116,6 +116,10 @@ class PenilaianKaryawanController extends Controller
             ->where(function ($query) use ($year, $month) {
                 $query->whereMonth('tgl_nilai', $month)
                     ->whereYear('tgl_nilai', $year);
+            })
+            ->whereHas('karyawan.jabatan', function ($query) use ($karyawan) {
+                $jabatan = $karyawan->karyawan->jabatan;
+                $query->where('kategori', $jabatan->kategori);
             })
             ->where('id_karyawan', '<>', $karyawan->id_karyawan);
 
@@ -187,9 +191,6 @@ class PenilaianKaryawanController extends Controller
         $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
 
         $tipeParams = $tipe;
-
-        if ($tipe == MPenilaian::TIPE[1]) {
-        }
 
         $mPenilaian->transform(function ($tipe) use ($idJabatanPenilai, $parent, $getTipePenilaian, $tipeParams) {
 
@@ -295,13 +296,24 @@ class PenilaianKaryawanController extends Controller
 
             foreach ($input['penilaians'] as $tipePenilaian) {
 
+                $getTipePenilaian = MTipePenilaian::where([
+                    'id_tipe' => $tipePenilaian['id'],
+                    'kategori' => $penilai->jabatan->kategori,
+                ])->first();
+
+                $karyawanPenilai = null;
+
+                if (!is_null(optional($getTipePenilaian)->id_jabatan)) {
+                    $karyawanPenilai = MKaryawan::where('id_jabatan', $getTipePenilaian->id_jabatan)->first();
+                }
+
                 $tipePenilaianData = [
                     'id_pk' => $storePenilaian->id,
                     'id_tipe' => $tipePenilaian['id'],
                     'nama_tipe' => $tipePenilaian['nama'],
                     'tipe_pk' => $tipePenilaian['tipe'],
                     'catatan' => optional($tipePenilaian)['catatan'],
-                    'id_karyawan' => $tipePenilaian['check'] > 0 ? $penilai->id : null,
+                    'id_karyawan' => $tipePenilaian['check'] > 0 ? $penilai->id : optional($karyawanPenilai)->id,
                     'nama_penilai' => $tipePenilaian['check'] > 0 ? $penilai->nama : null,
                 ];
 
@@ -361,6 +373,7 @@ class PenilaianKaryawanController extends Controller
                         'ttl_nilai' => $params['detail_ttl'],
                         'rata_nilai' => $rataNilai,
                         'id_penilai' => $penilai->id,
+                        'bobot' => $detail['bobot'],
                         'nama_penilai' => $tipePenilaian['check'] > 0 ? $penilai->nama : null,
                         'jabatan_penilai' => $penilai->jabatan->nama,
                         'updated_by' => $params['updated_by']
@@ -391,14 +404,23 @@ class PenilaianKaryawanController extends Controller
 
             $storePenilaian->save();
 
-            // Analisis Swot
-            AnalisisSwot::create([
-                'id_pk' => $storePenilaian->id,
-                'kelebihan' => $request->analisis_swot['kelebihan'],
-                'kekurangan' => $request->analisis_swot['kekurangan'],
-                'kesempatan' => $request->analisis_swot['kesempatan'],
-                'ancaman' => $request->analisis_swot['ancaman'],
-            ]);
+            if ($input['tipe'] == MPenilaian::TIPE[1]) { // jika penilaian khusus
+                Comment::create([
+                    'id_pk' => $storePenilaian->id,
+                    'catatan' => $request->comment['catatan'],
+                    'penilai' => $request->comment['penilai'],
+                    'dinilai' => $request->comment['dinilai'],
+                    'ancaman' => $request->analisis_swot['ancaman'],
+                ]);
+            } else {
+                AnalisisSwot::create([
+                    'id_pk' => $storePenilaian->id,
+                    'kelebihan' => $request->analisis_swot['kelebihan'],
+                    'kekurangan' => $request->analisis_swot['kekurangan'],
+                    'kesempatan' => $request->analisis_swot['kesempatan'],
+                    'ancaman' => $request->analisis_swot['ancaman'],
+                ]);
+            }
 
             DB::commit();
 
@@ -420,11 +442,12 @@ class PenilaianKaryawanController extends Controller
     {
         try {
 
-            $idJabatanPenilai = auth()->user()->karyawan->id_jabatan;
+            $karyawan = auth()->user()->karyawan;
 
             $penilaian = PenilaianKaryawan::with([
                 // 'karyawan.jabatan', // tipe penilaian relationship
                 'tipePenilaian', // tipe penilaian relationship
+                'comment', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
                 'analisisSwot', // analisis swot relationship
@@ -437,22 +460,20 @@ class PenilaianKaryawanController extends Controller
             }
 
             $getTipePenilaian = MTipePenilaian::all(['id_tipe', 'id_jabatan']);
+            $tipeParam = $penilaian->tipe;
 
-            $tipeParams = $penilaian->tipe;
+            $penilaian->tipePenilaian->transform(function ($tipe) use ($getTipePenilaian, $tipeParam, $karyawan) {
 
-            // $penilaian->tipePenilaian->transform(function ($tipe) use ($idJabatanPenilai, $getTipePenilaian, $tipeParams) {
-            //     if ($tipeParams == MPenilaian::TIPE[0]) {
-            //         $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $idJabatanPenilai)
-            //             ->where('id_tipe', $tipe->id_tipe)
-            //             ->count();
-            //         // $parent = $tipe->karyawan->jabatan->where('id_parent', $idJabatanPenilai)->count();
-            //         // $tipe->check = $tipe->check + optional($parent)->count();
-            //     } else {
-            //         $tipe->check_penilai = true;
-            //     }
+                if ($tipeParam == MPenilaian::TIPE[0] && is_null($tipe->id_karyawan)) {
+                    $tipe->check_penilai = $getTipePenilaian->where('id_jabatan', $karyawan->id_jabatan)
+                        ->where('id_tipe', $tipe->id_tipe)
+                        ->count();
+                } else {
+                    $tipe->check_penilai = $karyawan->id == $tipe->id_karyawan ? 2 : 0;
+                }
 
-            //     return $tipe;
-            // });
+                return $tipe;
+            });
 
             return response()->json(
                 new PenilaianKaryawanResource($penilaian),
@@ -479,6 +500,8 @@ class PenilaianKaryawanController extends Controller
 
             $getPenilaian = PenilaianKaryawan::find($id);
 
+            $penilaianServices = new PenilaianKaryawanServices();
+
             if (is_null($getPenilaian)) {
                 throw new Exception('Penilaian Belum Ada');
             }
@@ -503,7 +526,16 @@ class PenilaianKaryawanController extends Controller
                             $getSub->save();
                         }
                         // Average Detail Penilaian
-                        $avgDetail = $sumDetail / count($detail['relationship']['sub']);
+                        if ($getPenilaian->kategori == MJabatan::MEDIS) {
+                            $hitung = $penilaianServices->hitungMedis([
+                                'bobot' => $detail['bobot'],
+                                'ttlTipe' => $sumDetail,
+                            ]);
+                            $avgDetail = $hitung['cVal'];
+                            $sumDetail = $hitung['dVal'];
+                        } else {
+                            $avgDetail = $sumDetail / count($detail['relationship']['sub']);
+                        }
 
                         $getDetail = DetailPenilaian::find($detail['id']);
                         $getDetail->ttl_nilai = $sumDetail;
@@ -531,6 +563,22 @@ class PenilaianKaryawanController extends Controller
             $getPenilaian->ttl_nilai = $ttlRataNilai;
             $getPenilaian->rata_nilai = $ttlRataNilai / $countTipe;
             $getPenilaian->save();
+
+            if ($getPenilaian->tipe == MPenilaian::TIPE[1]) { // jika penilaian khusus
+                $comment = Comment::where('id_pk', $getPenilaian->id)->first();
+                $comment->catatan = $request->comment['catatan'];
+                $comment->penilai = $request->comment['penilai'];
+                $comment->dinilai = $request->comment['dinilai'];
+                $comment->save();
+            } else {
+                AnalisisSwot::where('id_pk', $getPenilaian->id)
+                    ->update([
+                        'kelebihan' => $request->analisis_swot['kelebihan'],
+                        'kekurangan' => $request->analisis_swot['kekurangan'],
+                        'kesempatan' => $request->analisis_swot['kesempatan'],
+                        'ancaman' => $request->analisis_swot['ancaman'],
+                    ]);
+            }
 
             DB::commit();
 
