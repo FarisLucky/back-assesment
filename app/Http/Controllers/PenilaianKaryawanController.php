@@ -22,6 +22,7 @@ use App\Models\TipePenilaian;
 use App\Services\PenilaianKaryawanServices;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -113,14 +114,15 @@ class PenilaianKaryawanController extends Controller
         DB::statement("SET SQL_MODE=''"); //this is the trick use it just before your query (untuk menghilangkah only_full_group_by)
         $penilaians = PenilaianKaryawan::with('karyawan')
             ->select('id', 'id_karyawan', 'jabatan', 'tipe', 'tgl_nilai', 'status')
-            ->where(function ($query) use ($year, $month) {
-                $query->whereMonth('tgl_nilai', $month)
-                    ->whereYear('tgl_nilai', $year);
-            })
+            // ->where(function ($query) use ($year, $month) {
+            //     $query->whereMonth('tgl_nilai', $month)
+            //         ->whereYear('tgl_nilai', $year);
+            // })
             ->whereHas('karyawan.jabatan', function ($query) use ($karyawan) {
                 $jabatan = $karyawan->karyawan->jabatan;
                 $query->where('kategori', $jabatan->kategori);
             })
+            ->whereNull('validasi_by')
             ->where('id_karyawan', '<>', $karyawan->id_karyawan);
 
         $relations = Arr::get(config('relationship'), MKaryawan::class);
@@ -601,5 +603,20 @@ class PenilaianKaryawanController extends Controller
         $penilaianKaryawans->delete();
 
         return response()->json('', Response::HTTP_NO_CONTENT);
+    }
+
+    public function validasiNilai(Request $request)
+    {
+        try {
+
+            $penilaian = PenilaianKaryawan::find($request->id);
+            $penilaian->validasi_by = auth()->user()->id;
+            $penilaian->save();
+
+            return response()->json(new PenilaianKaryawanResource($penilaian));
+        } catch (\Throwable $th) {
+
+            return response()->json($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

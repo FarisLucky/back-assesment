@@ -7,7 +7,9 @@ use App\Http\Resources\Api\MKaryawanResource;
 use App\Http\Resources\Api\PenilaianKaryawanResource;
 use App\Models\MJabatan;
 use App\Models\MKaryawan;
+use App\Models\MPenilaian;
 use App\Models\PenilaianKaryawan;
+use App\Models\User;
 use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -21,17 +23,19 @@ class HistoryPenilaianController extends Controller
         $sortBy = request('sort_by');
         $sortType = request('sort_type');
 
-        $jabatan = MJabatan::select('id')
-            ->where('id_parent', auth()->user()->karyawan->id_jabatan)
-            ->get();
-
         $karyawans = MKaryawan::with([
             'jabatan',
             'penilaianKaryawan'
         ])
             ->where('id', '<>', auth()->user()->id_karyawan);
 
-        $karyawans->when(!is_null($jabatan), function ($query) use ($jabatan) {
+        $user = auth()->user();
+
+        $jabatan = MJabatan::select('id')
+            ->where('id_parent', auth()->user()->karyawan->id_jabatan)
+            ->get();
+
+        $karyawans->when(!is_null($jabatan) && $user->role != User::ADMIN, function ($query) use ($jabatan) {
             $query->whereIn('id_jabatan', $jabatan->pluck('id'));
         });
 
@@ -81,8 +85,9 @@ class HistoryPenilaianController extends Controller
             $penilaians = PenilaianKaryawan::select('id', 'tipe', 'nama_penilai', 'tgl_nilai')
                 ->where([
                     'id_karyawan' => $idKaryawan,
-                    'tipe' => $tipe
+                    'tipe' => $tipe,
                 ])
+                ->whereNotNull('validasi_by')
                 ->get();
 
             return response()->json(PenilaianKaryawanResource::collection($penilaians));
@@ -106,6 +111,7 @@ class HistoryPenilaianController extends Controller
                 'analisisSwot', // analisis swot relationship
             ])
                 ->where('id', $id)
+                ->whereNotNull('validasi_by')
                 ->firstOrFail();
 
             return response()->json(
@@ -134,6 +140,7 @@ class HistoryPenilaianController extends Controller
                     'id_karyawan' => $idKaryawan,
                     'tipe' => $tipe,
                 ])
+                ->whereNotNull('validasi_by')
                 ->orderByDesc('id')
                 ->firstOrFail();
 

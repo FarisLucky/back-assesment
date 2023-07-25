@@ -81,6 +81,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('penilaian-karyawan.data');
     Route::get('penilaian-karyawan-progress', [PenilaianKaryawanController::class, 'indexProgress'])
         ->name('penilaian-karyawan.progress');
+    Route::post('penilaian-karyawans/validasi/admin', [PenilaianKaryawanController::class, 'validasiNilai'])
+        ->name('penilaian-karyawan.validasiNilai');
     Route::apiResource('penilaian-karyawans', PenilaianKaryawanController::class)
         ->except('show')
         ->names('penilaian-karyawan');
