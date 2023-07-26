@@ -2,22 +2,13 @@
 
 @section('nilai')
     <table>
-        <tr class="text-center">
-            <td style="width: 30%">
-                <img src="{{ asset('img/gs-logo.png') }}" width="70px">
-            </td>
-            <td>
-                Rumah Sakit
-            </td>
-            <td style="width: 30%">
-                <img src="{{ asset('img/paripurna-no-bg.png') }}" width="70px">
-            </td>
+        <tr>
+            <img src="{{ asset('img/header.png') }}" alt="header logo graha sehat" style="width: 100%; height: 130px;">
         </tr>
-        <tr class="text-center">
-            <td style="width: 100%" colspan="3">
-                <p class="title">
-                    LIST JABATAN RUMAH SAKIT GRAHA SEHAT
-                </p>
+        <tr>
+            <td>
+                <h2 style="text-align: center; font-size: 18px; font-weight: bold; padding: .5rem 0">List Jabatan Rumah Sakit
+                    Graha Sehat</h2>
             </td>
         </tr>
     </table>

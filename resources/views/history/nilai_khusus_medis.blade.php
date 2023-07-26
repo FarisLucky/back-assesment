@@ -1,33 +1,92 @@
 @extends('history.layout_print_nilai')
 
 @section('nilai')
+    <style>
+        .data-diri,
+        .data-diri tr,
+        .data-diri td {
+
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        .data-diri ul li:first-child {
+            border-bottom: none;
+        }
+
+        .data-diri ul li {
+            border: 1px solid black;
+            padding: .4rem
+        }
+
+        .title-diri {
+            padding: .3rem
+        }
+
+        .title-diri strong {
+            font-weight: 800
+        }
+    </style>
     <table>
-        <tr class="text-center">
-            <td style="width: 30%">
-                <img src="{{ asset('img/gs-logo.png') }}" width="70px">
-            </td>
-            <td>
-                Rumah Sakit
-            </td>
-            <td style="width: 30%">
-                <img src="{{ asset('img/paripurna-no-bg.png') }}" width="70px">
-            </td>
+        <tr>
+            <img src="{{ asset('img/header.png') }}" alt="header logo graha sehat" style="width: 100%; height: 130px;">
         </tr>
+    </table>
+    <table class="data-diri">
         <tr class="text-center">
             <td style="width: 100%" colspan="3">
                 <p class="title">
-                    EVALUASI DAN PENILAIAN KINERJA KARYAWAN MEDIS
+                    PENILAIAN KINERJA KARYAWAN <i>{{ $nilai->kategoriDesc }}</i>
                 </p>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="title-diri">
+                <strong>PEGAWAI YANG DINILAI</strong>
             </td>
         </tr>
         <tr>
             <td>
                 <ul>
                     <li>
-                        Nama Karyawan: <strong>{{ $nilai->nama_karyawan }}</strong>
+                        <span>Nama: {{ $nilai->nama_karyawan }}</span>
                     </li>
                     <li>
-                        Jabatan: <strong>{{ $nilai->jabatan }}</strong>
+                        <span>Jabatan: {{ $nilai->jabatan }}</span>
+                    </li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="title-diri">
+                <strong class="title-diri">PEJABAT PENILAI</strong>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    <li>
+                        <span>Nama: {{ $nilai->nama_penilai }}</span>
+                    </li>
+                    <li>
+                        <span>Jabatan: {{ $nilai->jabatan_penilai }}</span>
+                    </li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="title-diri">
+                <strong class="title-diri">ATASAN PEJABAT PENILAI</strong>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    <li>
+                        <span>Nama: {{ $atasanKaryawan->nama }}</span>
+                    </li>
+                    <li>
+                        <span>Jabatan: {{ $atasanKaryawan->jabatan->nama }}</span>
                     </li>
                 </ul>
             </td>

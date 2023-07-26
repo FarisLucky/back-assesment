@@ -172,8 +172,6 @@ class HistoryPenilaianController extends Controller
         } catch (\Throwable $th) {
 
             return dd($th->getMessage());
-
-            // abort(404, 'MAAF TIDAK ADA DATA');
         }
     }
 
@@ -182,6 +180,7 @@ class HistoryPenilaianController extends Controller
         try {
             $nilai = PenilaianKaryawan::with([
                 'karyawan', // tipe penilaian relationship
+                'penilai', // penilai relationship
                 'tipePenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian', // tipe penilaian relationship
                 'tipePenilaian.detailPenilaian.subPenilaian', // tipe penilaian relationship
@@ -189,13 +188,21 @@ class HistoryPenilaianController extends Controller
             ])
                 ->where('id', $idPenilaian)
                 ->firstOrFail();
+
+            $idAtasan = $nilai->karyawan->jabatan->id_parent;
+
             if ($nilai->kategori == MJabatan::NON_MEDIS) {
                 $viewName = 'history.nilai_khusus_nonmedis';
-            } else {
-                $viewName = 'history.nilai_khusus_medis';
-            }
 
-            return view($viewName, compact('nilai'));
+                return view($viewName, compact('nilai'));
+            } else {
+                $atasanJabatan = MJabatan::where('id', $idAtasan)->first();
+                $atasanKaryawan = MKaryawan::where('id_jabatan', $atasanJabatan->id_parent)->first();
+                // dd($atasanJabatan->id_parent);
+                $viewName = 'history.nilai_khusus_medis';
+
+                return view($viewName, compact('nilai', 'atasanKaryawan'));
+            }
         } catch (\Throwable $th) {
 
             return dd($th->getMessage());

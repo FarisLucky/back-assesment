@@ -21,6 +21,7 @@ class JabatanResource extends JsonResource
             'nama_with_parent' =>  $relationship . $this->nama,
             'level' =>  $this->level,
             'id_parent' => $this->id_parent,
+            'kategori_desc' => $this->kategori_desc,
             'relationship' => [
                 'parent' => new JabatanResource($this->whenLoaded('parent'))
             ],

@@ -2,23 +2,8 @@
 
 @section('nilai')
     <table>
-        <tr class="text-center">
-            <td style="width: 30%">
-                <img src="{{ asset('img/gs-logo.png') }}" width="70px">
-            </td>
-            <td>
-                Rumah Sakit
-            </td>
-            <td style="width: 30%">
-                <img src="{{ asset('img/paripurna-no-bg.png') }}" width="70px">
-            </td>
-        </tr>
-        <tr class="text-center">
-            <td style="width: 100%" colspan="3">
-                <p class="title">
-                    EVALUASI DAN PENILAIAN KINERJA KARYAWAN
-                </p>
-            </td>
+        <tr>
+            <img src="{{ asset('img/header.png') }}" alt="header logo graha sehat" style="width: 100%; height: 130px;">
         </tr>
         <tr>
             <td>
@@ -128,7 +113,7 @@
         <p>Kraksaan, {{ $nilai->tgl_nilai->isoFormat('LL') }}</p>
         <p>Yang Melaksanakan Penilaian</p>
         <p>
-            <strong>Choky Candra</strong>
+            <strong>{{ strtoupper($nilai->nama_penilai) }}</strong>
         </p>
         <p>
             <strong>NIP. 1643452039</strong>

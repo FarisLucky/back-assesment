@@ -13,48 +13,11 @@ class JabatanController extends Controller
 {
     public function index()
     {
-        // Gate::denyIf('user', 'MAAF ANDA TIDAK MEMILIKI AKSES KE HALAMAN INI', Response::HTTP_FORBIDDEN);
-
-        $page = request('per_page');
-        $columnKeyFilter = request('column_key');
-        $columnValFilter = request('column_val');
-        $sortBy = request('sort_by');
-        $sortType = request('sort_type');
-
-        $relations = Arr::get(config('relationship'), MJabatan::class);
-
         $jabatans = MJabatan::with('parent')
-            ->select('id', 'nama', 'id_parent', 'level', 'created_at', 'updated_at');
+            ->select('id', 'nama', 'id_parent', 'level', 'kategori', 'created_at', 'updated_at')
+            ->get();
 
-        $jabatans->when(!is_null($columnKeyFilter) && !is_null($columnValFilter), function ($query) use ($columnKeyFilter, $columnValFilter, $relations) {
-            for ($i = 0; $i < count($columnKeyFilter); $i++) {
-                if (str_contains($columnKeyFilter[$i], '.')) { // check ada titik ndak
-
-                    $relationQuery = explode('.', $columnKeyFilter[$i]);
-
-                    $getRelation = Arr::where($relations, function ($value) use ($relationQuery) {
-                        return $value == $relationQuery[1];
-                    });
-
-                    $relation = array_keys($getRelation)[0];
-
-                    $query->whereHas($relation, function ($query) use ($columnValFilter, $relationQuery, $i) {
-                        $query->where($relationQuery[2], 'LIKE', "%{$columnValFilter[$i]}%");
-                    });
-                } else {
-
-                    $query->where($columnKeyFilter[$i], 'LIKE', "%{$columnValFilter[$i]}%");
-                }
-            }
-        });
-
-        $jabatans->when(!is_null($sortBy) && !is_null($sortType), function ($query) use ($sortBy, $sortType) {
-            $query->orderBy($sortBy, $sortType);
-        }, function ($query) {
-            $query->orderBy('id', 'desc');
-        });
-
-        return JabatanResource::collection($jabatans->latest()->paginate($page));
+        return JabatanResource::collection($jabatans);
     }
 
     public function data()

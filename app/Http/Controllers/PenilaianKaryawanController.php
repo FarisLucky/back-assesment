@@ -119,8 +119,10 @@ class PenilaianKaryawanController extends Controller
             //         ->whereYear('tgl_nilai', $year);
             // })
             ->whereHas('karyawan.jabatan', function ($query) use ($karyawan) {
-                $jabatan = $karyawan->karyawan->jabatan;
-                $query->where('kategori', $jabatan->kategori);
+                if ($karyawan->role != 'ADMIN') {
+                    $jabatan = $karyawan->karyawan->jabatan;
+                    $query->where('kategori', $jabatan->kategori);
+                }
             })
             ->whereNull('validasi_by')
             ->where('id_karyawan', '<>', $karyawan->id_karyawan);
@@ -528,7 +530,7 @@ class PenilaianKaryawanController extends Controller
                             $getSub->save();
                         }
                         // Average Detail Penilaian
-                        if ($getPenilaian->kategori == MJabatan::MEDIS) {
+                        if ($getPenilaian->kategori == MJabatan::MEDIS && $getPenilaian->tipe == MPenilaian::TIPE[1]) {
                             $hitung = $penilaianServices->hitungMedis([
                                 'bobot' => $detail['bobot'],
                                 'ttlTipe' => $sumDetail,
@@ -609,14 +611,24 @@ class PenilaianKaryawanController extends Controller
     {
         try {
 
-            $penilaian = PenilaianKaryawan::find($request->id);
+            $penilaian = PenilaianKaryawan::with('tipePenilaian')
+                ->find($request->id);
+            foreach ($penilaian->tipePenilaian as $tipe) {
+                if (is_null($tipe->id_karyawan)) {
+                    throw new Exception('Silahkan lengkapi penilaian');
+                }
+            }
             $penilaian->validasi_by = auth()->user()->id;
             $penilaian->save();
 
             return response()->json(new PenilaianKaryawanResource($penilaian));
         } catch (\Throwable $th) {
 
-            return response()->json($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            $data = [
+                'message' => $th->getMessage()
+            ];
+
+            return response()->json($data, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

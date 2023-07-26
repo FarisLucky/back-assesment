@@ -26,7 +26,16 @@ class MJabatan extends Model
         "updated_at" => "datetime",
     ];
 
+    protected $appends = [
+        'kategori_desc'
+    ];
+
     // protected $appends = ['level_custom'];
+
+    public function getKategoriDescAttribute()
+    {
+        return $this->kategori == self::MEDIS ? 'MEDIS' : 'NON MEDIS';
+    }
 
     public function parent()
     {

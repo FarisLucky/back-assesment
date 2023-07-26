@@ -58,9 +58,15 @@ class PenilaianKaryawan extends Model
     {
         return number_format($this->rata_nilai, 1);
     }
+
     public function getTtlNilaiDescAttribute()
     {
         return number_format($this->ttl_nilai, 1);
+    }
+
+    public function getKategoriDescAttribute()
+    {
+        return $this->kategori == MJabatan::MEDIS ? 'MEDIS' : 'NON-MEDIS';
     }
 
     public function detail()
@@ -86,5 +92,15 @@ class PenilaianKaryawan extends Model
     public function comment()
     {
         return $this->hasOne(Comment::class, 'id_pk');
+    }
+
+    public function penilai()
+    {
+        return $this->belongsTo(MKaryawan::class, 'id_penilai');
+    }
+
+    public function atasanPenilai()
+    {
+        return $this->belongsTo(MKaryawan::class, 'id_jabatan');
     }
 }
