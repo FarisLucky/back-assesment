@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\MJabatan;
+use App\Models\MKaryawan;
 use App\Models\MPenilaian;
 use App\Models\MSubPenilaian;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -37,5 +39,18 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         // MJabatan::query()->update(['kategori' => 1]);
+        $karyawans = MKaryawan::all();
+        $users = [];
+        $pass = bcrypt('HDS-123');
+        $karyawans->each(function ($karyawan) use (&$users, $pass) {
+            $users[] = [
+                'id_karyawan' => $karyawan->id,
+                'name' => $karyawan->nama,
+                'email' => $karyawan->nip,
+                'password' => $pass,
+                'role' => 'USER',
+            ];
+        });
+        User::insert($users);
     }
 }

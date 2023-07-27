@@ -25,8 +25,6 @@ class MKaryawanController extends Controller
                 m_karyawan.id,
                 m_karyawan.nama,
                 m_karyawan.nip,
-                m_karyawan.sex,
-                m_karyawan.tgl_lahir,
                 m_karyawan.alamat,
                 m_karyawan.pendidikan,
                 m_karyawan.created_at,
